@@ -1,0 +1,715 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.app-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #003366;
+  padding: 20px 40px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.logo-prefeitura, .logo-ouvidoria {
+  height: 70px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+}
+
+.titulo-ouvidoria {
+  flex: 1;
+  text-align: center;
+}
+
+.titulo-ouvidoria h1 {
+  color: #fff;
+  font-size: 2.2rem;
+  margin: 0;
+  letter-spacing: 1px;
+  font-weight: 700;
+  text-shadow: 1px 2px 8px rgba(0,0,0,0.15);
+}
+
+.app-main {
+  margin: 40px auto 0 auto;
+  max-width: 600px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.app-main h2 {
+  color: #003366;
+  font-size: 1.5rem;
+  margin-bottom: 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: #f7fafd;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 32px 24px;
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+.login-form h2 {
+  color: #003366;
+  margin-bottom: 8px;
+}
+
+.login-form input {
+  padding: 10px 12px;
+  border: 1px solid #b0c4de;
+  border-radius: 6px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.login-form input:focus {
+  border: 1.5px solid #003366;
+}
+
+.login-form button {
+  padding: 10px 0;
+  background: #003366;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.login-form button:hover {
+  background: #0050b3;
+}
+
+.link-btn {
+  background: none !important;
+  color: #003366 !important;
+  text-decoration: underline;
+  font-size: 0.98rem;
+  margin-top: -10px;
+  margin-bottom: 0;
+  box-shadow: none !important;
+}
+
+.mensagem-erro {
+  color: #b30000;
+  background: #ffeaea;
+  border: 1px solid #ffb3b3;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.98rem;
+  margin-top: -8px;
+}
+
+.tabela-solicitacoes {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0 18px 0;
+  font-size: 1rem;
+  background: #f7fafd;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.tabela-solicitacoes th, .tabela-solicitacoes td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e0e6ed;
+  text-align: left;
+}
+.tabela-solicitacoes th {
+  background: #003366;
+  color: #fff;
+  font-weight: 600;
+}
+.tabela-solicitacoes tr:last-child td {
+  border-bottom: none;
+}
+.tabela-solicitacoes button {
+  padding: 6px 14px;
+  background: #003366;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.98rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.tabela-solicitacoes button:hover {
+  background: #0050b3;
+}
+.login-form textarea {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #b0c4de;
+  font-size: 1rem;
+  padding: 10px 12px;
+  outline: none;
+  transition: border 0.2s;
+}
+.login-form textarea:focus {
+  border: 1.5px solid #003366;
+}
+
+.painel-master {
+  margin: 32px auto 0 auto;
+  max-width: 500px;
+  background: #eaf3ff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 32px 24px 12px 24px;
+  text-align: center;
+}
+.painel-master h2 {
+  color: #003366;
+  margin-bottom: 18px;
+}
+.painel-master h3 {
+  color: #003366;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+.painel-master button {
+  padding: 7px 14px;
+  background: #003366;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.98rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 0;
+}
+.painel-master button:hover {
+  background: #0050b3;
+}
+
+.relatorio-filtro {
+  background: #f7fafd;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 24px 18px;
+  margin-bottom: 32px;
+  margin-top: 32px;
+  text-align: center;
+}
+.relatorio-filtro h3 {
+  color: #003366;
+  margin-bottom: 12px;
+}
+.relatorio-filtro label {
+  font-weight: 500;
+  color: #003366;
+  margin-right: 8px;
+}
+.relatorio-filtro input, .relatorio-filtro select {
+  margin-left: 4px;
+  margin-right: 12px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #b0c4de;
+  font-size: 1rem;
+}
+.relatorio-filtro button {
+  padding: 7px 14px;
+  background: #003366;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.98rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 0;
+}
+.relatorio-filtro button:hover {
+  background: #0050b3;
+}
+
+.modal-historico {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-historico-content {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  padding: 32px 24px;
+  min-width: 340px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: center;
+}
+.modal-historico-content h3 {
+  color: #003366;
+  margin-bottom: 18px;
+}
+.modal-historico-content button {
+  padding: 7px 14px;
+  background: #003366;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.98rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.modal-historico-content button:hover {
+  background: #0050b3;
+}
+
+/* Responsividade - Mobile First Approach */
+
+/* Tablets (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .app-header {
+    padding: 15px 25px;
+  }
+
+  .logo-prefeitura, .logo-ouvidoria {
+    height: 60px;
+  }
+
+  .titulo-ouvidoria h1 {
+    font-size: 1.8rem;
+  }
+
+  .app-main {
+    margin: 30px auto 0 auto;
+    max-width: 90%;
+    padding: 30px 25px;
+  }
+
+  .app-main h2 {
+    font-size: 1.4rem;
+  }
+
+  .login-form {
+    padding: 25px 20px;
+    gap: 15px;
+  }
+
+  .tabela-solicitacoes {
+    font-size: 0.9rem;
+  }
+
+  .tabela-solicitacoes th, .tabela-solicitacoes td {
+    padding: 8px 6px;
+  }
+
+  .painel-master {
+    padding: 20px;
+  }
+
+  .painel-master h2 {
+    font-size: 1.6rem;
+  }
+
+  .painel-master h3 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Mobile (até 768px) */
+@media (max-width: 768px) {
+  .app-header {
+    padding: 10px 15px;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .logo-prefeitura, .logo-ouvidoria {
+    height: 50px;
+    padding: 4px;
+  }
+
+  .titulo-ouvidoria h1 {
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+  }
+
+  .app-main {
+    margin: 20px 10px 0 10px;
+    max-width: 100%;
+    border-radius: 12px;
+    padding: 20px 15px;
+  }
+
+  .app-main h2 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+  }
+
+  .login-form {
+    padding: 20px 15px;
+    gap: 12px;
+    border-radius: 8px;
+  }
+
+  .login-form h2 {
+    font-size: 1.2rem;
+  }
+
+  .login-form input,
+  .login-form textarea {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  .login-form button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+
+  .tabela-solicitacoes {
+    font-size: 0.8rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    display: block;
+  }
+
+  .tabela-solicitacoes th, 
+  .tabela-solicitacoes td {
+    padding: 6px 4px;
+    min-width: 80px;
+  }
+
+  .tabela-solicitacoes th {
+    font-size: 0.75rem;
+    padding: 8px 4px;
+  }
+
+  .tabela-solicitacoes button {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    margin: 2px;
+  }
+
+  .painel-master {
+    padding: 15px;
+    border-radius: 8px;
+  }
+
+  .painel-master h2 {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+  }
+
+  .painel-master h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+
+  .painel-master button {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .relatorio-filtro {
+    padding: 15px;
+    border-radius: 8px;
+  }
+
+  .relatorio-filtro h3 {
+    font-size: 1.1rem;
+  }
+
+  .relatorio-filtro label {
+    font-size: 0.9rem;
+  }
+
+  .relatorio-filtro input, 
+  .relatorio-filtro select {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .relatorio-filtro button {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+
+  .modal-historico {
+    padding: 10px;
+  }
+
+  .modal-historico-content {
+    padding: 20px 15px;
+    border-radius: 8px;
+    max-width: 95%;
+    max-height: 80vh;
+  }
+
+  .modal-historico-content h3 {
+    font-size: 1.2rem;
+  }
+
+  .modal-historico-content button {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Mobile pequeno (até 480px) */
+@media (max-width: 480px) {
+  .app-header {
+    padding: 8px 10px;
+  }
+
+  .logo-prefeitura, .logo-ouvidoria {
+    height: 40px;
+    padding: 3px;
+  }
+
+  .titulo-ouvidoria h1 {
+    font-size: 1.2rem;
+  }
+
+  .app-main {
+    margin: 15px 5px 0 5px;
+    padding: 15px 10px;
+  }
+
+  .app-main h2 {
+    font-size: 1.2rem;
+  }
+
+  .login-form {
+    padding: 15px 10px;
+    gap: 10px;
+  }
+
+  .login-form h2 {
+    font-size: 1.1rem;
+  }
+
+  .login-form input,
+  .login-form textarea {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .login-form button {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+
+  .tabela-solicitacoes {
+    font-size: 0.75rem;
+  }
+
+  .tabela-solicitacoes th, 
+  .tabela-solicitacoes td {
+    padding: 4px 2px;
+    min-width: 60px;
+  }
+
+  .tabela-solicitacoes th {
+    font-size: 0.7rem;
+    padding: 6px 2px;
+  }
+
+  .tabela-solicitacoes button {
+    padding: 3px 6px;
+    font-size: 0.65rem;
+    margin: 1px;
+  }
+
+  .painel-master {
+    padding: 10px;
+  }
+
+  .painel-master h2 {
+    font-size: 1.2rem;
+  }
+
+  .painel-master h3 {
+    font-size: 1rem;
+  }
+
+  .painel-master button {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  .relatorio-filtro {
+    padding: 10px;
+  }
+
+  .relatorio-filtro h3 {
+    font-size: 1rem;
+  }
+
+  .relatorio-filtro label {
+    font-size: 0.85rem;
+  }
+
+  .relatorio-filtro input, 
+  .relatorio-filtro select {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+  }
+
+  .relatorio-filtro button {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  .modal-historico-content {
+    padding: 15px 10px;
+    max-width: 98%;
+  }
+
+  .modal-historico-content h3 {
+    font-size: 1.1rem;
+  }
+
+  .modal-historico-content button {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Desktop grande (acima de 1200px) */
+@media (min-width: 1201px) {
+  .app-main {
+    max-width: 800px;
+    padding: 50px 40px;
+  }
+
+  .app-main h2 {
+    font-size: 1.8rem;
+  }
+
+  .login-form {
+    padding: 40px 30px;
+    gap: 20px;
+  }
+
+  .login-form h2 {
+    font-size: 1.4rem;
+  }
+
+  .login-form input,
+  .login-form textarea {
+    padding: 15px 18px;
+    font-size: 1rem;
+  }
+
+  .login-form button {
+    padding: 15px 25px;
+    font-size: 1rem;
+  }
+
+  .tabela-solicitacoes {
+    font-size: 1rem;
+  }
+
+  .tabela-solicitacoes th, 
+  .tabela-solicitacoes td {
+    padding: 12px 10px;
+  }
+
+  .painel-master {
+    padding: 30px;
+  }
+
+  .painel-master h2 {
+    font-size: 2rem;
+  }
+
+  .painel-master h3 {
+    font-size: 1.4rem;
+  }
+
+  .painel-master button {
+    padding: 12px 20px;
+    font-size: 1rem;
+  }
+}
+
+/* Orientação landscape em mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .app-header {
+    padding: 8px 15px;
+    flex-direction: row;
+  }
+
+  .titulo-ouvidoria h1 {
+    font-size: 1.1rem;
+  }
+
+  .app-main {
+    margin: 10px auto 0 auto;
+    max-width: 95%;
+  }
+
+  .tabela-solicitacoes {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+}
