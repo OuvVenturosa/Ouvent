@@ -70,7 +70,9 @@ Configure as seguintes opções:
 | **Install Command** | `npm install` |
 
 ### 4️⃣ Variáveis de Ambiente
-Adicione as seguintes variáveis:
+**⚠️ IMPORTANTE:** Configure estas variáveis no painel do Vercel após o deploy.
+
+No Vercel, vá em **Settings** → **Environment Variables** e adicione:
 
 | Nome | Valor |
 |------|-------|
@@ -165,6 +167,12 @@ REACT_APP_API_URL=https://sua-url-vercel.app
 Error: Cannot find module 'express'
 ```
 **Solução:** Verifique se o `package.json` do backend está correto.
+
+#### **Erro de Configuração Vercel:**
+```
+Invalid backend/vercel.json file provided
+```
+**Solução:** O arquivo `vercel.json` foi corrigido. Execute novamente o script de preparação.
 
 #### **Erro de Build no Netlify:**
 ```

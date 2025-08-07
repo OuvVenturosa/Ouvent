@@ -60,11 +60,7 @@ $backendVercelConfig = @'
       "src": "/(.*)",
       "dest": "/backend.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production",
-    "DB_PATH": "./database/ouvidoria.db"
-  }
+  ]
 }
 '@
 
