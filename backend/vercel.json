@@ -1,24 +1,23 @@
-{
+﻿{
   "version": 2,
   "builds": [
     {
-      "src": "api.js",
+      "src": "backend.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api.js"
+      "dest": "/backend.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/api.js"
+      "dest": "/backend.js"
     }
   ],
-  "functions": {
-    "api.js": {
-      "maxDuration": 30
-    }
+  "env": {
+    "NODE_ENV": "production",
+    "DB_PATH": "./database/ouvidoria.db"
   }
-} 
+}

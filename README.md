@@ -31,7 +31,14 @@ CHATBOT OUV/
 # URL pública: https://abc123.ngrok.io/venturosa
 ```
 
-#### 🥈 Opção 2: Vercel (Permanente - 15 minutos)
+#### 🥈 Opção 2: Vercel + Netlify (Recomendado - 20 minutos)
+```powershell
+# Preparar arquivos para deploy híbrido
+.\deploy_vercel_netlify.ps1
+# Backend no Vercel + Frontend no Netlify
+```
+
+#### 🥉 Opção 3: Vercel Completo (Permanente - 15 minutos)
 ```powershell
 # Preparar arquivos
 .\deploy_vercel.ps1
@@ -41,10 +48,12 @@ CHATBOT OUV/
 ```
 
 #### 📚 Documentação Completa:
-- **Guia Rápido:** `DEPLOY_RAPIDO.md`
-- **Guia Completo:** `docs/DEPLOY_GRATUITO_GUIDE.md`
+- **Guia Rápido:** `DEPLOY_RAPIDO_VERCEL_NETLIFY.md` ⚡
+- **Guia Completo:** `README_DEPLOY_VERCEL_NETLIFY.md` ⭐
+- **Documentação Geral:** `docs/DEPLOY_GRATUITO_GUIDE.md`
 - **Deploy Vercel:** `DEPLOY_VERCEL_RAPIDO.md`
 - **Deploy Netlify:** `DEPLOY_NETLIFY_FRONTEND.md`
+- **Scripts:** `deploy_vercel_netlify.ps1`
 
 ### 🏠 **EXECUÇÃO LOCAL**
 
@@ -100,12 +109,15 @@ npm start
 ### 🛠️ Scripts Utilitários
 - `cadastrar_master.js` - Cadastra usuário master
 - `mostrar_urls.ps1` - Mostra URLs de acesso
+- `deploy_vercel_netlify.ps1` - Deploy híbrido (Backend Vercel + Frontend Netlify)
+- `deploy_vercel.ps1` - Deploy completo no Vercel
 
 ## 🌐 URLs de Acesso
 
 ### 🌍 **ACESSO PÚBLICO (Internet)**
 - **ngrok:** `https://abc123.ngrok.io/venturosa` (temporário)
-- **Vercel:** `https://seu-dominio.vercel.app/venturosa` (permanente)
+- **Vercel + Netlify:** `https://seu-site.netlify.app/venturosa` (recomendado)
+- **Vercel Completo:** `https://seu-dominio.vercel.app/venturosa` (permanente)
 - **Netlify:** `https://seu-dominio.netlify.app/venturosa` (permanente)
 
 ### 🏠 **ACESSO LOCAL**
@@ -120,6 +132,63 @@ npm start
 - **Frontend:** http://192.168.1.141:3000/venturosa
 - **API:** http://192.168.1.141:3001/api/health
 
+## 🚀 Deploy Público
+
+### 🎯 **Opções de Deploy Disponíveis**
+
+#### 1️⃣ **Vercel + Netlify (Recomendado)**
+- **Backend:** Vercel (Node.js)
+- **Frontend:** Netlify (React)
+- **Vantagens:** Melhor performance, separação de responsabilidades
+- **Script:** `.\deploy_vercel_netlify.ps1`
+
+#### 2️⃣ **Vercel Completo**
+- **Backend:** Vercel (Node.js)
+- **Frontend:** Vercel (React)
+- **Vantagens:** Tudo em uma plataforma
+- **Script:** `.\deploy_vercel.ps1`
+
+#### 3️⃣ **ngrok (Temporário)**
+- **Uso:** Testes rápidos
+- **Duração:** Sessão atual
+- **Comando:** `ngrok http 80`
+
+### 📋 **Passos para Deploy**
+
+#### **Backend no Vercel:**
+1. Acesse https://vercel.com
+2. Faça login com GitHub
+3. Clique em "New Project"
+4. Importe seu repositório
+5. Configure:
+   - **Framework Preset:** Node.js
+   - **Root Directory:** `backend`
+   - **Build Command:** `npm install`
+   - **Output Directory:** `.`
+6. Adicione variáveis de ambiente:
+   - `NODE_ENV=production`
+   - `DB_PATH=./database/ouvidoria.db`
+
+#### **Frontend no Netlify:**
+1. Acesse https://netlify.com
+2. Faça login com GitHub
+3. Clique em "New site from Git"
+4. Conecte seu repositório
+5. Configure:
+   - **Base directory:** `frontend`
+   - **Build command:** `npm run build`
+   - **Publish directory:** `build`
+6. Adicione variável de ambiente:
+   - `REACT_APP_API_URL=https://sua-url-vercel.app`
+
+### 🔗 **URLs Finais**
+- **Frontend:** `https://seu-site.netlify.app/venturosa`
+- **Backend:** `https://seu-backend.vercel.app`
+
+### 🧪 **Credenciais de Teste**
+- **Master:** CPF 12345678900 / Senha admin123
+- **Secretaria:** CPF 98765432100 / Senha secretaria123
+
 ## 📚 Documentação
 
 Toda a documentação está organizada na pasta `docs/`:
@@ -128,6 +197,7 @@ Toda a documentação está organizada na pasta `docs/`:
 - **Manual Completo:** `docs/MANUAL_EXECUCAO_SISTEMA.md`
 - **Configuração de Domínio:** `docs/DOMINIO_PUBLICO.md`
 - **URLs de Acesso:** `docs/URLS_ACESSO.md`
+- **Deploy Gratuito:** `docs/DEPLOY_GRATUITO_GUIDE.md`
 
 ## 🔧 Configuração
 
@@ -178,10 +248,23 @@ Toda a documentação está organizada na pasta `docs/`:
 
 ## 📞 Suporte
 
-Para problemas ou dúvidas:
+### 🔧 **Problemas Comuns**
+
+#### **Deploy no Vercel:**
+- **Erro de build:** Verifique se o `package.json` está correto
+- **Erro de dependências:** Execute `npm install` localmente
+- **Erro de variáveis:** Configure as variáveis de ambiente
+
+#### **Deploy no Netlify:**
+- **Erro de build:** Verifique se o `netlify.toml` está correto
+- **Erro de redirecionamento:** Verifique o arquivo `_redirects`
+- **Erro de API:** Verifique se a URL do backend está correta
+
+#### **Problemas Gerais:**
 1. Verifique os logs em `logs/`
 2. Consulte a documentação em `docs/`
 3. Execute `.\scripts\verificar_nginx.ps1` para diagnóstico
+4. Verifique se o banco de dados está acessível
 
 ## 🔄 Manutenção
 
