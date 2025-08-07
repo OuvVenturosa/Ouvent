@@ -29,6 +29,8 @@ git push
 - `backend/vercel.json` - Configuração específica
 - `.vercelignore` - Otimização de deploy
 
+> **Atenção:** No arquivo `vercel.json`, não utilize as propriedades `functions` e `builds` juntas. Escolha apenas uma delas conforme sua necessidade. Para projetos Node.js, utilize apenas `builds`.
+
 ### 3. Deploy Frontend
 1. Crie novo projeto no Vercel
 2. Importe o mesmo repositório

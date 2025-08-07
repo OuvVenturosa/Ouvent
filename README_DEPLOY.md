@@ -94,9 +94,22 @@
 - ✅ Verifique se todas as dependências estão no `package.json`
 - ✅ Confirme que o Node.js está na versão 16+
 
-### Erro: "Command not found"
-- ✅ Verifique se o `api.js` existe no backend
-- ✅ Confirme que as rotas estão corretas
+
+### Erro: "Invalid backend/vercel.json file provided"
+- ✅ Certifique-se que o arquivo `backend/vercel.json` está com o seguinte conteúdo:
+```json
+{
+  "version": 2,
+  "builds": [
+    { "src": "server.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "server.js" }
+  ]
+}
+```
+- ✅ Remova duplicidades ou objetos extras no arquivo
+- ✅ Execute novamente o script de preparação se necessário
 
 ### Erro: "Build failed"
 - ✅ Verifique os logs no Vercel Dashboard

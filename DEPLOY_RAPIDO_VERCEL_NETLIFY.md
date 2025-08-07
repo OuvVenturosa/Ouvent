@@ -17,9 +17,9 @@
    - **Framework:** Node.js
 5. **Deploy**
 6. **Settings** → **Environment Variables** → Adicione:
-   - `NODE_ENV` = `production`
-   - `DB_PATH` = `./database/ouvidoria.db`
-   - `PORT` = `3001`
+   - NODE_ENV = production
+   - DB_PATH = ./database/ouvidoria.db
+   - PORT = 3001
 
 ### 3️⃣ Frontend no Netlify (3 min)
 1. Acesse: https://netlify.com
