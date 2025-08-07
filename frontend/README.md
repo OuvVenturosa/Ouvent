@@ -1,70 +1,218 @@
-# Getting Started with Create React App
+# 🌐 Frontend - Sistema de Ouvidoria Municipal
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 📁 Estrutura
 
-## Available Scripts
+```
+frontend/
+├── public/              # Arquivos públicos
+├── src/                 # Código fonte React
+├── package.json         # Dependências e scripts
+├── netlify.toml         # Configuração Netlify
+└── README.md           # Este arquivo
+```
 
-In the project directory, you can run:
+## 🚀 Deploy no Netlify
 
-### `npm start`
+### 1. Configuração Automática
+O projeto já está configurado para deploy no Netlify com:
+- ✅ `package.json` com todas as dependências
+- ✅ `netlify.toml` com configurações otimizadas
+- ✅ Headers de segurança configurados
+- ✅ Redirects para SPA
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 2. Deploy Manual
+1. Acesse [netlify.com](https://netlify.com)
+2. Faça login com GitHub
+3. Clique "New site from Git"
+4. Escolha GitHub e selecione o repositório
+5. Configure:
+   - **Base directory**: `frontend`
+   - **Build command**: `npm run build`
+   - **Publish directory**: `build`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 3. Variáveis de Ambiente
+```
+REACT_APP_API_URL=https://seu-backend-vercel.vercel.app/api
+NODE_VERSION=16
+```
 
-### `npm test`
+## 🔧 Desenvolvimento Local
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Instalar Dependências
+```bash
+cd frontend
+npm install
+```
 
-### `npm run build`
+### Executar em Desenvolvimento
+```bash
+npm start
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Build para Produção
+```bash
+npm run build
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Testar Build Local
+```bash
+npm run build
+npx serve -s build
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 📡 Funcionalidades
 
-### `npm run eject`
+### Páginas Principais
+- **Login**: `/venturosa` - Área administrativa
+- **Lista de Demandas**: `/venturosa/demandas`
+- **Detalhes da Demanda**: `/venturosa/demanda/:id`
+- **Editor de Respostas**: `/venturosa/editor/:id`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Componentes Principais
+- `App.js` - Componente principal
+- `ListaDemandas.js` - Lista de demandas
+- `DetalhesDemanda.js` - Detalhes da demanda
+- `EditorResposta.js` - Editor de respostas
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 🎨 Estilos
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### CSS Principal
+- `App.css` - Estilos globais
+- `ListaDemandas.css` - Estilos da lista
+- `DetalhesDemanda.css` - Estilos dos detalhes
+- `EditorResposta.css` - Estilos do editor
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Assets
+- `logo_ouvidoria.png` - Logo da Ouvidoria
+- `logo_prefeitura.png` - Logo da Prefeitura
 
-## Learn More
+## 🔐 Autenticação
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Login Padrão
+- **CPF**: `admin`
+- **Senha**: `admin123`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Configuração de Segurança
+- Headers de segurança configurados
+- CORS configurado
+- Validação de dados
 
-### Code Splitting
+## 📱 Responsividade
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Breakpoints
+- **Mobile**: < 768px
+- **Tablet**: 768px - 1024px
+- **Desktop**: > 1024px
 
-### Analyzing the Bundle Size
+### Testes
+```bash
+# Testar responsividade
+npm run build
+npx serve -s build
+# Abrir em diferentes dispositivos
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## 🔄 Integração com API
 
-### Making a Progressive Web App
+### Endpoints Utilizados
+```javascript
+// Listar demandas
+GET /api/demandas
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+// Buscar demanda específica
+GET /api/demandas/:protocolo
 
-### Advanced Configuration
+// Criar nova demanda
+POST /api/demandas
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+// Atualizar status
+PUT /api/demandas/:protocolo/status
+```
 
-### Deployment
+### Configuração da API
+```javascript
+// Em .env ou variável de ambiente
+REACT_APP_API_URL=https://seu-backend.vercel.app/api
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 🚨 Solução de Problemas
 
-### `npm run build` fails to minify
+### Erro: "Build failed"
+- ✅ Verifique se todas as dependências estão instaladas
+- ✅ Confirme se o Node.js está na versão 16+
+- ✅ Verifique os logs no Netlify Dashboard
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Erro: "API not found"
+- ✅ Verifique se a variável `REACT_APP_API_URL` está correta
+- ✅ Confirme se o backend está funcionando
+- ✅ Teste a API diretamente
+
+### Erro: "Page not found"
+- ✅ Verifique se o arquivo `netlify.toml` tem as redirects corretas
+- ✅ Confirme se o `build/index.html` existe
+
+## 📊 Performance
+
+### Otimizações
+- ✅ Lazy loading de componentes
+- ✅ Code splitting
+- ✅ Minificação de assets
+- ✅ Cache otimizado
+
+### Métricas
+- Tempo de carregamento inicial
+- Tempo de carregamento de páginas
+- Performance mobile
+- Lighthouse score
+
+## 🔄 Atualizações
+
+### Deploy Automático
+- ✅ Conectado ao GitHub
+- ✅ Deploy automático a cada push
+- ✅ Preview de branches
+
+### Deploy Manual
+```bash
+# Build local
+npm run build
+
+# Deploy via CLI
+netlify deploy --dir=build --prod
+```
+
+## 📞 Suporte
+
+### Recursos Úteis
+- **Netlify Docs**: [docs.netlify.com](https://docs.netlify.com)
+- **React Docs**: [reactjs.org](https://reactjs.org)
+- **Create React App**: [create-react-app.dev](https://create-react-app.dev)
+
+### Logs e Debug
+- **Build logs**: Dashboard do Netlify
+- **Console logs**: Browser DevTools
+- **Network logs**: Browser DevTools
+
+## 🎯 Checklist de Deploy
+
+### Antes do Deploy
+- [ ] Frontend builda localmente
+- [ ] API está funcionando
+- [ ] Variáveis de ambiente configuradas
+- [ ] Testes passando
+
+### Durante o Deploy
+- [ ] Build sem erros
+- [ ] Arquivos estáticos servidos
+- [ ] Redirects funcionando
+- [ ] API conectada
+
+### Após o Deploy
+- [ ] Site carrega corretamente
+- [ ] Login funciona
+- [ ] API responde
+- [ ] Mobile responsivo
+
+---
+
+**✅ Pronto para Deploy!** O frontend está configurado e otimizado para o Netlify.

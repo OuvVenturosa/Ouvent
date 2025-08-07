@@ -43,6 +43,8 @@ CHATBOT OUV/
 #### 📚 Documentação Completa:
 - **Guia Rápido:** `DEPLOY_RAPIDO.md`
 - **Guia Completo:** `docs/DEPLOY_GRATUITO_GUIDE.md`
+- **Deploy Vercel:** `DEPLOY_VERCEL_RAPIDO.md`
+- **Deploy Netlify:** `DEPLOY_NETLIFY_FRONTEND.md`
 
 ### 🏠 **EXECUÇÃO LOCAL**
 
