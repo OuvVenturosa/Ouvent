@@ -31,11 +31,13 @@ CHATBOT OUV/
 # URL pública: https://abc123.ngrok.io/venturosa
 ```
 
-#### 🥈 Opção 2: Vercel + Railway (Permanente - 30 minutos)
+#### 🥈 Opção 2: Vercel (Permanente - 15 minutos)
 ```powershell
 # Preparar arquivos
 .\deploy_vercel.ps1
-# Seguir instruções para deploy no Vercel e Railway
+# Seguir instruções para deploy no Vercel
+# Backend: Root Directory = backend
+# Frontend: Root Directory = frontend
 ```
 
 #### 📚 Documentação Completa:

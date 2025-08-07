@@ -17,8 +17,9 @@
 4. Importe o repositório
 5. Configure:
    - **Framework**: Node.js
-   - **Root Directory**: `backend-vercel`
+   - **Root Directory**: `backend`
    - **Build Command**: `npm install`
+   - **Output Directory**: `backend`
 6. Variáveis de ambiente:
    ```
    JWT_SECRET=sua_chave_secreta_muito_segura
