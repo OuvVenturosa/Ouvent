@@ -19,6 +19,8 @@ O projeto já está configurado para deploy no Vercel com:
 - ✅ `package.json` com todas as dependências
 - ✅ `api.js` otimizado para serverless
 - ✅ `vercel.json` com configurações corretas
+- ✅ `.vercelignore` para otimizar deploy
+- ✅ Dependências limpas (sem módulos nativos problemáticos)
 
 ### 2. Deploy Manual
 1. Acesse [vercel.com](https://vercel.com)
@@ -30,6 +32,7 @@ O projeto já está configurado para deploy no Vercel com:
    - **Root Directory**: `backend`
    - **Build Command**: `npm install`
    - **Output Directory**: `backend`
+   - **Install Command**: `npm install`
 
 ### 3. Variáveis de Ambiente (Opcional)
 ```

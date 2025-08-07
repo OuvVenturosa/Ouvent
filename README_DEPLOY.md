@@ -20,13 +20,20 @@
    - **Root Directory**: `backend`
    - **Build Command**: `npm install`
    - **Output Directory**: `backend`
-6. Variáveis de ambiente:
+   - **Install Command**: `npm install`
+6. Variáveis de ambiente (opcional):
    ```
    JWT_SECRET=sua_chave_secreta_muito_segura
    EMAIL_USER=ouvidoria.venturosa@gmail.com
    EMAIL_PASS=kbng efuw gfwr uywd
    ```
 7. Clique "Deploy"
+
+**✅ Arquivos já configurados:**
+- `backend/package.json` - Dependências e scripts
+- `backend/api.js` - Servidor API otimizado
+- `backend/vercel.json` - Configuração específica
+- `.vercelignore` - Arquivos ignorados
 
 #### Frontend
 1. Crie novo projeto no Vercel
@@ -76,6 +83,24 @@
 2. **Configure domínio** personalizado
 3. **Monitore** logs e performance
 4. **Configure backups** do banco
+
+## 🔧 SOLUÇÃO DE PROBLEMAS
+
+### Erro: "package.json not found"
+- ✅ Verifique se o `backend/package.json` existe
+- ✅ Confirme que o Root Directory está correto
+
+### Erro: "npm install failed"
+- ✅ Verifique se todas as dependências estão no `package.json`
+- ✅ Confirme que o Node.js está na versão 16+
+
+### Erro: "Command not found"
+- ✅ Verifique se o `api.js` existe no backend
+- ✅ Confirme que as rotas estão corretas
+
+### Erro: "Build failed"
+- ✅ Verifique os logs no Vercel Dashboard
+- ✅ Confirme que o `.vercelignore` está correto
 
 ## 📞 SUPORTE
 

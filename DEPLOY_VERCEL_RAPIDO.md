@@ -20,7 +20,14 @@ git push
    - **Root Directory**: `backend`
    - **Build Command**: `npm install`
    - **Output Directory**: `backend`
+   - **Install Command**: `npm install`
 6. Clique "Deploy"
+
+**✅ Arquivos já configurados:**
+- `backend/package.json` - Dependências corretas
+- `backend/api.js` - API otimizada
+- `backend/vercel.json` - Configuração específica
+- `.vercelignore` - Otimização de deploy
 
 ### 3. Deploy Frontend
 1. Crie novo projeto no Vercel
