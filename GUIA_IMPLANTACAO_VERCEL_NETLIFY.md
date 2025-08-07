@@ -1,12 +1,9 @@
-# 🚀 Deploy Sistema de Ouvidoria - Vercel + Netlify
+# 🚀 GUIA COMPLETO - IMPLANTAÇÃO SISTEMA OUVIDORIA
+## Vercel (Backend) + Netlify (Frontend)
 
-## 📋 Visão Geral
+---
 
-Este guia explica como fazer o deploy do **Sistema de Ouvidoria Municipal** usando:
-- **Backend:** Vercel (Node.js)
-- **Frontend:** Netlify (React)
-
-## 🎯 Pré-requisitos
+## 📋 PRÉ-REQUISITOS
 
 ### ✅ Contas Necessárias
 - [GitHub](https://github.com) - Para repositório
@@ -18,11 +15,13 @@ Este guia explica como fazer o deploy do **Sistema de Ouvidoria Municipal** usan
 - npm ou yarn
 - Git
 
-## 🔧 Preparação Inicial
+---
+
+## 🔧 PREPARAÇÃO INICIAL
 
 ### 1️⃣ Executar Script de Preparação
 ```powershell
-# Executar script de preparação
+# Execute o script de preparação
 .\deploy_vercel_netlify.ps1
 ```
 
@@ -32,21 +31,24 @@ Este script irá:
 - ✅ Instalar dependências
 - ✅ Preparar ambiente
 
-### 2️⃣ Verificar Arquivos Criados
+### 2️⃣ Verificar Estrutura dos Arquivos
 ```
 backend/
-├── vercel.json          # Configuração Vercel
-├── package.json         # Dependências backend
-└── node_modules/        # Dependências instaladas
+├── api.js              # API principal
+├── vercel.json         # Configuração Vercel
+├── package.json        # Dependências
+└── ouvidoria.db       # Banco de dados
 
 frontend/
-├── netlify.toml         # Configuração Netlify
-├── .env                 # Variáveis de ambiente
-├── public/_redirects    # Redirecionamentos SPA
-└── node_modules/        # Dependências instaladas
+├── netlify.toml        # Configuração Netlify
+├── .env                # Variáveis de ambiente
+├── public/_redirects   # Redirecionamentos SPA
+└── package.json        # Dependências React
 ```
 
-## 🚀 Deploy do Backend (Vercel)
+---
+
+## 🚀 DEPLOY DO BACKEND (Vercel)
 
 ### 1️⃣ Acessar Vercel
 1. Acesse: https://vercel.com
@@ -58,7 +60,7 @@ frontend/
 2. Escolha seu repositório do GitHub
 3. Clique em **"Import"**
 
-### 3️⃣ Configurar Projeto
+### 3️⃣ Configurar Projeto Backend
 Configure as seguintes opções:
 
 | Campo | Valor |
@@ -69,23 +71,29 @@ Configure as seguintes opções:
 | **Output Directory** | `.` |
 | **Install Command** | `npm install` |
 
-### 4️⃣ Variáveis de Ambiente
+### 4️⃣ Variáveis de Ambiente (Vercel)
 **⚠️ IMPORTANTE:** Configure estas variáveis no painel do Vercel após o deploy.
 
 No Vercel, vá em **Settings** → **Environment Variables** e adicione:
 
 | Nome | Valor |
 |------|-------|
-| NODE_ENV = production
-| DB_PATH = ./database/ouvidoria.db` |
-| PORT = 3001 |
+| `NODE_ENV` | `production` |
+| `DB_PATH` | `./ouvidoria.db` |
+| `PORT` | `3001` |
 
-### 5️⃣ Deploy
+### 5️⃣ Deploy Backend
 1. Clique em **"Deploy"**
 2. Aguarde o build (2-3 minutos)
-3. Anote a URL gerada (ex: `https://abc123.vercel.app`)
+3. **Anote a URL gerada** (ex: `https://abc123.vercel.app`)
 
-## 🌐 Deploy do Frontend (Netlify)
+### 6️⃣ Testar Backend
+Acesse: `https://sua-url-vercel.app/api/health`
+Deve retornar: `{"status":"OK","message":"API da Ouvidoria funcionando"}`
+
+---
+
+## 🌐 DEPLOY DO FRONTEND (Netlify)
 
 ### 1️⃣ Acessar Netlify
 1. Acesse: https://netlify.com
@@ -97,7 +105,7 @@ No Vercel, vá em **Settings** → **Environment Variables** e adicione:
 2. Selecione seu repositório
 3. Clique em **"Connect"**
 
-### 3️⃣ Configurar Build
+### 3️⃣ Configurar Build Frontend
 Configure as seguintes opções:
 
 | Campo | Valor |
@@ -106,7 +114,7 @@ Configure as seguintes opções:
 | **Build command** | `npm run build` |
 | **Publish directory** | `build` |
 
-### 4️⃣ Variáveis de Ambiente
+### 4️⃣ Variáveis de Ambiente (Netlify)
 Adicione a variável:
 
 | Nome | Valor |
@@ -115,12 +123,14 @@ Adicione a variável:
 
 **⚠️ IMPORTANTE:** Substitua `sua-url-vercel.app` pela URL real do seu backend no Vercel.
 
-### 5️⃣ Deploy
+### 5️⃣ Deploy Frontend
 1. Clique em **"Deploy site"**
 2. Aguarde o build (3-5 minutos)
-3. Anote a URL gerada (ex: `https://abc123.netlify.app`)
+3. **Anote a URL gerada** (ex: `https://abc123.netlify.app`)
 
-## 🔗 Configuração Final
+---
+
+## 🔗 CONFIGURAÇÃO FINAL
 
 ### 1️⃣ Atualizar URLs
 Após ambos os deploys, atualize os arquivos:
@@ -141,7 +151,9 @@ REACT_APP_API_URL=https://sua-url-vercel.app
 2. Clique em **"Trigger deploy"** > **"Deploy site"**
 3. Aguarde o novo build
 
-## 🧪 Testando o Deploy
+---
+
+## 🧪 TESTANDO O DEPLOY
 
 ### 1️⃣ URLs de Acesso
 - **Frontend:** `https://seu-site.netlify.app/venturosa`
@@ -157,8 +169,11 @@ REACT_APP_API_URL=https://sua-url-vercel.app
 - ✅ Detalhes de protocolos
 - ✅ Editor de respostas
 - ✅ Estatísticas
+- ✅ Exportação de dados
 
-## 🔧 Troubleshooting
+---
+
+## 🔧 TROUBLESHOOTING
 
 ### ❌ Problemas Comuns
 
@@ -172,7 +187,7 @@ Error: Cannot find module 'express'
 ```
 Invalid backend/vercel.json file provided
 ```
-**Solução:** O arquivo `vercel.json` foi corrigido. Execute novamente o script de preparação.
+**Solução:** Execute novamente o script de preparação.
 
 #### **Erro de Build no Netlify:**
 ```
@@ -202,7 +217,9 @@ Access to fetch at 'https://backend.vercel.app' from origin 'https://frontend.ne
 1. Acesse: `https://seu-site.netlify.app/venturosa`
 2. Deve carregar a página de login
 
-## 📊 Monitoramento
+---
+
+## 📊 MONITORAMENTO
 
 ### 🔍 Logs do Vercel
 1. Acesse seu projeto no Vercel
@@ -212,7 +229,9 @@ Access to fetch at 'https://backend.vercel.app' from origin 'https://frontend.ne
 1. Acesse seu site no Netlify
 2. Vá em **"Deploys"** > **"View deploy log"**
 
-## 🚀 Otimizações
+---
+
+## 🚀 OTIMIZAÇÕES
 
 ### ⚡ Performance
 - **Vercel:** CDN global automático
@@ -224,7 +243,9 @@ Access to fetch at 'https://backend.vercel.app' from origin 'https://frontend.ne
 - **Headers:** Configurados automaticamente
 - **CORS:** Configurado no backend
 
-## 📞 Suporte
+---
+
+## 📞 SUPORTE
 
 ### 🆘 Problemas Técnicos
 1. Verifique os logs em cada plataforma
@@ -238,7 +259,9 @@ Access to fetch at 'https://backend.vercel.app' from origin 'https://frontend.ne
 - **Deploy Vercel:** `DEPLOY_VERCEL_RAPIDO.md`
 - **Deploy Netlify:** `DEPLOY_NETLIFY_FRONTEND.md`
 
-## 🎉 Conclusão
+---
+
+## 🎉 CONCLUSÃO
 
 Após seguir todos os passos, você terá:
 - ✅ Backend rodando no Vercel
