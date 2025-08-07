@@ -2,18 +2,19 @@
   "version": 2,
   "builds": [
     {
-      "src": "api.js",
+      "src": "api/index.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api.js"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/api.js"
+      "dest": "/api/index.js"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "DB_PATH": "/tmp/ouvidoria.db",
+    "CORS_ORIGIN": "*"
+  }
 }
