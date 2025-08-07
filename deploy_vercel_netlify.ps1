@@ -47,18 +47,18 @@ $backendVercelConfig = @'
   "version": 2,
   "builds": [
     {
-      "src": "backend.js",
+      "src": "api.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend.js"
+      "dest": "/api.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/backend.js"
+      "dest": "/api.js"
     }
   ]
 }
