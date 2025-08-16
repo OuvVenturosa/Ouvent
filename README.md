@@ -31,9 +31,36 @@ CHATBOT OUV/
 # URL pública: https://abc123.ngrok.io/venturosa
 ```
 
-#### 🥈 Opção 2: Deploy na Vercel (Backend) e Netlify (Frontend)
+#### 🥈 Opção 2: Deploy na Vercel (Backend) e Netlify (Frontend) - RECOMENDADO
+
+##### Preparação Inicial
+
+1. Certifique-se de ter uma conta no [GitHub](https://github.com), [Vercel](https://vercel.com) e [Netlify](https://netlify.com)
+2. Faça upload do seu código para um repositório GitHub
+3. Verifique se os arquivos de configuração estão presentes:
+   - `backend/vercel.json`
+   - `frontend/netlify.toml`
 
 ##### Backend (Vercel)
+
+**Método 1: Deploy via Dashboard (Recomendado)**
+
+1. Acesse [vercel.com](https://vercel.com) e faça login
+2. Clique em "New Project"
+3. Importe seu repositório GitHub
+4. Configure o projeto:
+   - **Framework Preset:** Node.js
+   - **Root Directory:** `backend`
+   - **Build Command:** `npm install`
+   - **Output Directory:** `.`
+5. Configure as variáveis de ambiente:
+   - `NODE_ENV=production`
+   - `DB_PATH=/tmp/ouvidoria.db` (para persistência temporária)
+   - `CORS_ORIGIN=*` (ou o domínio específico do seu frontend)
+6. Clique em "Deploy"
+
+**Método 2: Deploy via CLI**
+
 ```bash
 # Navegar até a pasta do backend
 cd backend
@@ -45,7 +72,7 @@ npm install -g vercel
 vercel login
 
 # Deploy do backend
-vercel
+vercel --prod
 ```
 
 O projeto já possui um arquivo `vercel.json` configurado com as seguintes definições:
@@ -72,6 +99,23 @@ O projeto já possui um arquivo `vercel.json` configurado com as seguintes defin
 ```
 
 ##### Frontend (Netlify)
+
+**Método 1: Deploy via Dashboard (Recomendado)**
+
+1. Acesse [netlify.com](https://netlify.com) e faça login
+2. Clique em "New site from Git"
+3. Selecione seu repositório GitHub
+4. Configure o projeto:
+   - **Base directory:** `frontend`
+   - **Build command:** `npm run build`
+   - **Publish directory:** `build`
+5. Configure as variáveis de ambiente:
+   - `REACT_APP_API_URL=https://seu-backend.vercel.app` (URL do seu backend na Vercel)
+   - `NODE_VERSION=16` (ou versão mais recente)
+6. Clique em "Deploy site"
+
+**Método 2: Deploy via CLI**
+
 ```bash
 # Navegar até a pasta do frontend
 cd frontend
@@ -96,7 +140,7 @@ O projeto já possui um arquivo `netlify.toml` configurado com as seguintes defi
   command = "npm run build"
 
 [build.environment]
-  NODE_VERSION = "14"
+  NODE_VERSION = "16"
 
 [[redirects]]
   from = "/venturosa/*"
@@ -113,8 +157,9 @@ O projeto já possui um arquivo `netlify.toml` configurado com as seguintes defi
 ```
 
 **Importante:** 
-1. Após o deploy, atualize a variável de ambiente `REACT_APP_API_URL` no dashboard do Netlify para apontar para a URL do seu backend na Vercel. Exemplo: `https://seu-backend.vercel.app`
-2. O arquivo `setupProxy.js` no frontend é usado apenas para desenvolvimento local e não afeta o ambiente de produção:
+1. Após o deploy, verifique se a variável de ambiente `REACT_APP_API_URL` no dashboard do Netlify está apontando para a URL correta do seu backend na Vercel. Exemplo: `https://seu-backend.vercel.app`
+2. Teste a conexão entre frontend e backend acessando a URL do frontend e verificando se ele consegue se comunicar com o backend.
+3. O arquivo `setupProxy.js` no frontend é usado apenas para desenvolvimento local e não afeta o ambiente de produção:
 ```javascript
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
@@ -128,6 +173,20 @@ module.exports = function(app) {
   );
 };
 ```
+
+##### Verificação e Monitoramento
+
+1. **Verificar Backend:**
+   - Acesse `https://seu-backend.vercel.app/api/health`
+   - Deve retornar `{"status":"ok"}`
+
+2. **Verificar Frontend:**
+   - Acesse `https://seu-site.netlify.app/venturosa`
+   - Deve carregar a página de login
+
+3. **Monitoramento:**
+   - **Vercel:** Dashboard > seu-projeto > Functions > Logs
+   - **Netlify:** Dashboard > seu-site > Deploys > Deploy log
 
 ### 🏠 **EXECUÇÃO LOCAL**
 
@@ -266,55 +325,112 @@ foreach ($pid in $processes80) { taskkill /PID $pid /F }
 #### 1️⃣ **Vercel + Netlify (Recomendado)**
 - **Backend:** Vercel (Node.js)
 - **Frontend:** Netlify (React)
-- **Vantagens:** Melhor performance, separação de responsabilidades
-- **Script:** `.\deploy_vercel_netlify.ps1`
+- **Vantagens:** Melhor performance, separação de responsabilidades, CI/CD automático
+- **Limitações gratuitas:** 
+  - Vercel: 100GB de banda/mês, 100 horas de execução serverless/mês
+  - Netlify: 100GB de banda/mês, 300 minutos de build/mês
 
 #### 2️⃣ **Vercel Completo**
 - **Backend:** Vercel (Node.js)
 - **Frontend:** Vercel (React)
-- **Vantagens:** Tudo em uma plataforma
-- **Script:** `.\deploy_vercel.ps1`
+- **Vantagens:** Tudo em uma plataforma, configuração simplificada
+- **Limitações gratuitas:** 100GB de banda/mês, 100 horas de execução serverless/mês
 
 #### 3️⃣ **ngrok (Temporário)**
-- **Uso:** Testes rápidos
-- **Duração:** Sessão atual
+- **Uso:** Testes rápidos, demonstrações, desenvolvimento
+- **Duração:** Sessão atual (plano gratuito)
 - **Comando:** `ngrok http 80`
+- **Limitações gratuitas:** URL muda a cada reinicialização, 2 horas de sessão
 
-### 📋 **Passos para Deploy**
+### 📋 **Passos Detalhados para Deploy**
 
 #### **Backend no Vercel:**
-1. Acesse https://vercel.com
-2. Faça login com GitHub
-3. Clique em "New Project"
-4. Importe seu repositório
-5. Configure:
-   - **Framework Preset:** Node.js
-   - **Root Directory:** `backend`
-   - **Build Command:** `npm install`
-   - **Output Directory:** `.`
-6. Adicione variáveis de ambiente:
-   - `NODE_ENV=production`
-   - `DB_PATH=N:\ouvidoria.db`
+
+1. **Preparação do Código:**
+   - Verifique se `backend/vercel.json` está configurado corretamente
+   - Certifique-se que `package.json` tem todas as dependências necessárias
+   - Remova qualquer referência a caminhos locais no código
+
+2. **Deploy via Dashboard:**
+   - Acesse https://vercel.com e faça login
+   - Clique em "New Project" e importe seu repositório GitHub
+   - Configure:
+     - **Framework Preset:** Node.js
+     - **Root Directory:** `backend`
+     - **Build Command:** `npm install`
+     - **Output Directory:** `.`
+   - Em "Environment Variables", adicione:
+     - `NODE_ENV=production`
+     - `DB_PATH=/tmp/ouvidoria.db` (para persistência temporária)
+     - `CORS_ORIGIN=*` (ou domínio específico do frontend)
+   - Clique em "Deploy"
+
+3. **Verificação Pós-Deploy:**
+   - Teste a API: `https://seu-backend.vercel.app/api/health`
+   - Verifique os logs no Dashboard do Vercel
+   - Anote a URL para configurar o frontend
 
 #### **Frontend no Netlify:**
-1. Acesse https://netlify.com
-2. Faça login com GitHub
-3. Clique em "New site from Git"
-4. Conecte seu repositório
-5. Configure:
-   - **Base directory:** `frontend`
-   - **Build command:** `npm run build`
-   - **Publish directory:** `build`
-6. Adicione variável de ambiente:
-   - `REACT_APP_API_URL=https://sua-url-vercel.app`
+
+1. **Preparação do Código:**
+   - Verifique se `frontend/netlify.toml` está configurado corretamente
+   - Atualize `package.json` se necessário
+   - Remova qualquer referência a URLs locais no código
+
+2. **Deploy via Dashboard:**
+   - Acesse https://netlify.com e faça login
+   - Clique em "New site from Git" e selecione seu repositório
+   - Configure:
+     - **Base directory:** `frontend`
+     - **Build command:** `npm run build`
+     - **Publish directory:** `build`
+   - Em "Environment variables", adicione:
+     - `REACT_APP_API_URL=https://seu-backend.vercel.app` (URL do backend na Vercel)
+     - `NODE_VERSION=16` (ou versão mais recente)
+   - Clique em "Deploy site"
+
+3. **Configuração Pós-Deploy:**
+   - Em "Domain settings", configure seu domínio personalizado (opcional)
+   - Em "Deploy settings", verifique se o build está correto
+   - Teste o frontend: `https://seu-site.netlify.app/venturosa`
+
+### 🔄 **CI/CD Automático**
+
+Ambas as plataformas oferecem CI/CD automático quando conectadas ao GitHub:
+
+- **Vercel:** Cada push para a branch principal gera um novo deploy automático
+- **Netlify:** Cada push para a branch principal gera um novo deploy automático
+
+Para configurar branches de preview (desenvolvimento/staging):
+
+1. **Vercel:** Em "Git Integration" configure "Preview Branches"
+2. **Netlify:** Em "Build & deploy" configure "Deploy contexts"
 
 ### 🔗 **URLs Finais**
+
 - **Frontend:** `https://seu-site.netlify.app/venturosa`
 - **Backend:** `https://seu-backend.vercel.app`
+- **API:** `https://seu-backend.vercel.app/api`
 
 ### 🧪 **Credenciais de Teste**
+
 - **Master:** CPF 12345678900 / Senha admin123
 - **Secretaria:** CPF 98765432100 / Senha secretaria123
+
+### 🔍 **Monitoramento e Logs**
+
+- **Vercel:** Dashboard > seu-projeto > Functions > Logs
+- **Netlify:** Dashboard > seu-site > Deploys > Deploy log
+
+### 💾 **Persistência de Dados**
+
+Para persistência de dados no ambiente serverless:
+
+1. **Opção Básica:** Use `/tmp/ouvidoria.db` (temporário, reinicia periodicamente)
+2. **Opção Recomendada:** Conecte a um banco de dados externo como:
+   - MongoDB Atlas (gratuito até 512MB)
+   - Supabase (PostgreSQL, gratuito até 500MB)
+   - Firebase (NoSQL, gratuito com limites)
 
 ## 📚 Documentação
 
@@ -373,47 +489,187 @@ Toda a documentação está organizada na pasta `docs/`:
 - ✅ Logs de auditoria
 - ✅ Backup automático
 
-## 📞 Suporte
+## 📞 Suporte e Solução de Problemas
 
-### 🔧 **Problemas Comuns**
+### 🔧 **Problemas Comuns e Soluções**
 
-#### **Deploy no Vercel:**
-- **Erro de build:** Verifique se o `package.json` está correto
-- **Erro de dependências:** Execute `npm install` localmente
-- **Erro de variáveis:** Configure as variáveis de ambiente
+#### **Deploy no Vercel (Backend):**
 
-#### **Deploy no Netlify:**
-- **Erro de build:** Verifique se o `netlify.toml` está correto
-- **Erro de redirecionamento:** Verifique o arquivo `_redirects`
-- **Erro de API:** Verifique se a URL do backend está correta
+| Problema | Solução |
+|----------|--------|
+| **Erro de build** | 1. Verifique se o `package.json` está correto e tem todas as dependências<br>2. Remova dependências que usam módulos nativos<br>3. Verifique os logs de build no Dashboard do Vercel |
+| **Erro 500 na API** | 1. Verifique os logs de função no Dashboard do Vercel<br>2. Confirme se as variáveis de ambiente estão configuradas<br>3. Verifique se o caminho do banco de dados está correto (`/tmp/ouvidoria.db`) |
+| **Erro CORS** | 1. Configure `CORS_ORIGIN=*` ou especifique o domínio do frontend<br>2. Verifique se os headers CORS estão sendo enviados corretamente |
+| **Banco de dados não persiste** | 1. O diretório `/tmp` é temporário no Vercel, considere usar um banco externo<br>2. Use MongoDB Atlas, Supabase ou Firebase para persistência |
+| **Limite de execução excedido** | 1. Otimize suas funções para execução mais rápida<br>2. Considere o plano Pro do Vercel para mais recursos |
+
+#### **Deploy no Netlify (Frontend):**
+
+| Problema | Solução |
+|----------|--------|
+| **Erro de build** | 1. Verifique se o `netlify.toml` está correto<br>2. Confirme se o comando de build funciona localmente<br>3. Verifique os logs de build no Dashboard do Netlify |
+| **Erro de redirecionamento** | 1. Verifique o arquivo `_redirects` ou configurações no `netlify.toml`<br>2. Confirme que as regras de redirecionamento estão corretas para SPA |
+| **Erro de conexão com API** | 1. Verifique se a variável `REACT_APP_API_URL` está configurada corretamente<br>2. Teste a URL da API diretamente no navegador<br>3. Verifique se o backend está online e respondendo |
+| **Erro 404 em rotas** | 1. Confirme que os redirecionamentos para SPA estão configurados<br>2. Verifique se a rota `/venturosa/*` está redirecionando para `index.html` |
+| **Problemas de cache** | 1. Force um novo deploy no Netlify<br>2. Adicione headers de cache-control no `netlify.toml` |
+
+#### **Conexão Frontend-Backend:**
+
+| Problema | Solução |
+|----------|--------|
+| **API não responde** | 1. Verifique se a URL da API está correta no frontend<br>2. Teste a API diretamente: `curl https://seu-backend.vercel.app/api/health`<br>3. Verifique os logs do backend no Vercel |
+| **Erro CORS no console** | 1. Configure CORS no backend para permitir o domínio do frontend<br>2. Verifique se o protocolo (http/https) está correto |
+| **Dados não persistem** | 1. Verifique a conexão com o banco de dados<br>2. Considere usar um banco de dados externo para persistência |
 
 #### **Problemas Gerais:**
-1. Verifique os logs em `logs/`
-2. Consulte a documentação em `docs/`
-3. Execute `.\scripts\verificar_nginx.ps1` para diagnóstico
-4. Verifique se o banco de dados está acessível
-5. Para problemas com Git, consulte o guia em `docs/GIT.md`
 
-## 🔄 Manutenção
+1. **Verificação de Conectividade:**
+   - Teste o backend: `curl https://seu-backend.vercel.app/api/health`
+   - Teste o frontend: Acesse `https://seu-site.netlify.app/venturosa`
+   - Verifique os logs em ambas as plataformas
 
-### Limpeza de Logs
+2. **Problemas de Desempenho:**
+   - Otimize o tamanho do bundle do frontend
+   - Minimize o tempo de execução das funções serverless
+   - Considere usar CDN para assets estáticos
+
+3. **Recursos Adicionais:**
+   - Consulte a documentação em `docs/`
+   - Para problemas com Git, consulte o guia em `docs/GIT.md`
+   - Verifique a documentação oficial do [Vercel](https://vercel.com/docs) e [Netlify](https://docs.netlify.com)
+
+4. **Atualizações e Manutenção:**
+   - Mantenha as dependências atualizadas
+   - Verifique regularmente os logs e métricas
+   - Configure alertas para falhas de build ou deploy
+
+## 🔄 Manutenção e Atualização Automática
+
+### 🤖 Configuração de CI/CD para Atualizações Automáticas
+
+#### GitHub Actions para Deploy Automático
+
+Para configurar atualizações automáticas após commits, crie os seguintes arquivos no seu repositório:
+
+1. **Para o Backend (Vercel)** - Crie `.github/workflows/vercel-deploy.yml`:
+
+```yaml
+name: Deploy Backend para Vercel
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Instalar Vercel CLI
+        run: npm install -g vercel
+        
+      - name: Deploy para Vercel
+        run: |
+          cd backend
+          vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+```
+
+2. **Para o Frontend (Netlify)** - Crie `.github/workflows/netlify-deploy.yml`:
+
+```yaml
+name: Deploy Frontend para Netlify
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          
+      - name: Instalar dependências
+        run: |
+          cd frontend
+          npm ci
+        
+      - name: Build
+        run: |
+          cd frontend
+          npm run build
+        
+      - name: Deploy para Netlify
+        uses: nwtgck/actions-netlify@v2
+        with:
+          publish-dir: './frontend/build'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy do GitHub Actions"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+```
+
+3. **Configuração dos Secrets no GitHub**:
+   - Acesse seu repositório no GitHub
+   - Vá para Settings > Secrets and variables > Actions
+   - Adicione os seguintes secrets:
+     - `VERCEL_TOKEN`: Obtenha em vercel.com > Settings > Tokens
+     - `NETLIFY_AUTH_TOKEN`: Obtenha em netlify.com > User settings > Applications > Personal access tokens
+     - `NETLIFY_SITE_ID`: Encontre na URL do seu site no Netlify ou nas configurações do site
+
+### 🧹 Manutenção de Rotina
+
+#### Limpeza de Logs (Ambiente Local)
 ```powershell
 # Limpar logs antigos
 Remove-Item "logs\*.log" -Force
 ```
 
-### Backup do Banco
+#### Backup do Banco (Ambiente Local)
 ```powershell
 # Fazer backup do banco
 Copy-Item "database\ouvidoria.db" "database\ouvidoria_backup_$(Get-Date -Format 'yyyyMMdd').db"
 ```
 
-### Atualização
+#### Atualização de Dependências
 ```powershell
-# Atualizar dependências
-cd config
+# Atualizar dependências do backend
+cd backend
+npm update
+
+# Atualizar dependências do frontend
+cd frontend
 npm update
 ```
+
+#### Verificação de Segurança
+```powershell
+# Verificar vulnerabilidades no backend
+cd backend
+npm audit
+
+# Verificar vulnerabilidades no frontend
+cd frontend
+npm audit
+```
+
+### 📊 Monitoramento Contínuo
+
+- **Vercel:** Configure alertas de erro no Dashboard > seu-projeto > Settings > Alerts
+- **Netlify:** Configure notificações em User settings > Notification settings
+- **GitHub Actions:** Verifique o status das execuções em Actions > Workflows
 
 ---
 
