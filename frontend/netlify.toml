@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "14"
+  CI = "false"
 
 [[redirects]]
   from = "/venturosa/*"
@@ -16,4 +17,5 @@
   status = 200
 
 [context.production.environment]
-  REACT_APP_API_URL = "https://ouvent.vercel.app/"
+  REACT_APP_API_URL = "https://seu-backend.vercel.app"
+  CI = "false"
