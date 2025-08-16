@@ -1,4 +1,4 @@
-﻿[build]
+[build]
   publish = "build"
   command = "npm run build"
 
@@ -16,4 +16,4 @@
   status = 200
 
 [context.production.environment]
-  REACT_APP_API_URL = "https://seu-backend.vercel.app"
+  REACT_APP_API_URL = "https://ouvent.vercel.app/"
