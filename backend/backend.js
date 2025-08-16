@@ -52,7 +52,8 @@ app.get('/api/health', (req, res) => {
 
 // Inicialização do banco de dados
 const path = require('path');
-const dbPath = path.join(__dirname, '..', 'database', 'ouvidoria.db');
+// Caminho modificado para apontar para a unidade N:
+const dbPath = 'N:\\ouvidoria.db';
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Erro ao conectar ao banco de dados:', err);

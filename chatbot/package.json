@@ -1,0 +1,25 @@
+{
+  "name": "ouvidoria-chatbot",
+  "version": "1.0.0",
+  "description": "Chatbot de WhatsApp para Ouvidoria Municipal",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "whatsapp-web.js": "^1.23.0",
+    "qrcode-terminal": "^0.12.0",
+    "pdfkit": "^0.14.0",
+    "mime-types": "^2.1.35",
+    "nodemailer": "^6.9.7",
+    "fs": "0.0.1-security",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

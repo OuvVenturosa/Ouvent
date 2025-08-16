@@ -26,79 +26,203 @@ CHATBOT OUV/
 ```powershell
 # Baixar ngrok de: https://ngrok.com/download
 # Executar sistema
-.\executar_sistema_completo_com_nginx.ps1
+.\scripts\executar_sistema_completo_com_nginx.ps1
 # Em novo terminal: ngrok http 80
 # URL pública: https://abc123.ngrok.io/venturosa
 ```
 
-#### 🥈 Opção 2: Vercel + Netlify (Recomendado - 20 minutos)
-```powershell
-# Preparar arquivos para deploy híbrido
-.\deploy_vercel_netlify.ps1
-# Backend no Vercel + Frontend no Netlify
+#### 🥈 Opção 2: Deploy na Vercel (Backend) e Netlify (Frontend)
+
+##### Backend (Vercel)
+```bash
+# Navegar até a pasta do backend
+cd backend
+
+# Instalar Vercel CLI (se ainda não tiver)
+npm install -g vercel
+
+# Fazer login na Vercel
+vercel login
+
+# Deploy do backend
+vercel
 ```
 
-#### 🥉 Opção 3: Vercel Completo (Permanente - 15 minutos)
-```powershell
-# Preparar arquivos
-.\deploy_vercel.ps1
-# Seguir instruções para deploy no Vercel
-# Backend: Root Directory = backend
-# Frontend: Root Directory = frontend
+O projeto já possui um arquivo `vercel.json` configurado com as seguintes definições:
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api.js"
+    }
+  ]
+}
 ```
 
-#### 📚 Documentação Completa:
-- **Guia Rápido:** `DEPLOY_RAPIDO_VERCEL_NETLIFY.md` ⚡
-- **Guia Completo:** `README_DEPLOY_VERCEL_NETLIFY.md` ⭐
-- **Documentação Geral:** `docs/DEPLOY_GRATUITO_GUIDE.md`
-- **Deploy Vercel:** `DEPLOY_VERCEL_RAPIDO.md`
-- **Deploy Netlify:** `DEPLOY_NETLIFY_FRONTEND.md`
-- **Scripts:** `deploy_vercel_netlify.ps1`
+##### Frontend (Netlify)
+```bash
+# Navegar até a pasta do frontend
+cd frontend
+
+# Instalar Netlify CLI (se ainda não tiver)
+npm install -g netlify-cli
+
+# Fazer login no Netlify
+netlify login
+
+# Build do frontend
+npm run build
+
+# Deploy do frontend
+netlify deploy --prod
+```
+
+O projeto já possui um arquivo `netlify.toml` configurado com as seguintes definições:
+```toml
+[build]
+  publish = "build"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "14"
+
+[[redirects]]
+  from = "/venturosa/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production.environment]
+  REACT_APP_API_URL = "https://seu-backend.vercel.app"
+```
+
+**Importante:** 
+1. Após o deploy, atualize a variável de ambiente `REACT_APP_API_URL` no dashboard do Netlify para apontar para a URL do seu backend na Vercel. Exemplo: `https://seu-backend.vercel.app`
+2. O arquivo `setupProxy.js` no frontend é usado apenas para desenvolvimento local e não afeta o ambiente de produção:
+```javascript
+const { createProxyMiddleware } = require('http-proxy-middleware');
+
+module.exports = function(app) {
+  app.use(
+    '/api',
+    createProxyMiddleware({
+      target: 'http://localhost:3001',
+      changeOrigin: true,
+    })
+  );
+};
+```
 
 ### 🏠 **EXECUÇÃO LOCAL**
 
-#### Opção 1: Execução Completa (Recomendado)
+#### 🟢 Iniciar o Sistema
+
+##### Opção 1: Execução Completa com Nginx (Recomendado)
 ```powershell
-# Executar sistema completo com nginx
+# Executar sistema completo com nginx (inclui backend, frontend e servidor web)
 .\scripts\executar_sistema_completo_com_nginx.ps1
 ```
 
-#### Opção 2: Execução Simples
+##### Opção 2: Execução Completa sem Nginx
+```powershell
+# Executar sistema completo sem nginx (apenas backend e frontend)
+.\scripts\executar_sistema_completo.ps1
+```
+
+##### Opção 3: Execução Simples
 ```powershell
 # Executar sistema simples
 .\iniciar_sistema_simples.ps1
 ```
 
-#### Opção 3: Menu Interativo
+##### Opção 4: Menu Interativo
 ```powershell
 # Menu com opções
 .\iniciar_sistema.ps1
 ```
 
-#### Opção 4: Execução Manual
+##### Opção 5: Execução Manual (Componentes Separados)
 ```powershell
 # Iniciar backend
 .\scripts\iniciar_backend.js
 
-# Iniciar frontend
+# Iniciar frontend (em outro terminal)
 cd frontend
 npm start
 
-# Iniciar nginx
+# Iniciar nginx (opcional, em outro terminal)
 .\scripts\iniciar_nginx_manual.ps1
+
+# Iniciar chatbot (opcional, em outro terminal)
+cd chatbot
+node iniciar_chatbot.js
+```
+
+#### 🔴 Fechar o Sistema
+
+##### Opção 1: Fechar Sistema Completo com Nginx
+```powershell
+# Fechar sistema completo com nginx (encerra todos os processos)
+.\scripts\fechar_sistema_completo_com_nginx.ps1
+```
+
+##### Opção 2: Fechar Sistema Completo sem Nginx
+```powershell
+# Fechar sistema completo sem nginx
+.\scripts\fechar_sistema_completo.ps1
+```
+
+##### Opção 3: Fechar Sistema Simples
+```powershell
+# Fechar sistema simples
+.\scripts\fechar_sistema.ps1
+```
+
+##### Opção 4: Fechar Manualmente
+```powershell
+# Encerrar processos nas portas específicas
+$processes3000 = netstat -ano | findstr :3000 | ForEach-Object { ($_ -split '\s+')[4] }
+$processes3001 = netstat -ano | findstr :3001 | ForEach-Object { ($_ -split '\s+')[4] }
+$processes80 = netstat -ano | findstr :80 | ForEach-Object { ($_ -split '\s+')[4] }
+
+# Encerrar cada processo
+foreach ($pid in $processes3000) { taskkill /PID $pid /F }
+foreach ($pid in $processes3001) { taskkill /PID $pid /F }
+foreach ($pid in $processes80) { taskkill /PID $pid /F }
 ```
 
 ## 📋 Scripts Disponíveis
 
 ### 🟢 Scripts de Inicialização
-- `iniciar_sistema_completo.ps1` - Inicia todo o sistema
-- `iniciar_backend.js` - Inicia apenas o backend
-- `iniciar_whatsapp.js` - Inicia apenas o WhatsApp
-- `iniciar_nginx_manual.ps1` - Inicia o nginx manualmente
+- `scripts\executar_sistema_completo_com_nginx.ps1` - Inicia todo o sistema com servidor web nginx
+- `scripts\executar_sistema_completo.ps1` - Inicia o sistema sem nginx
+- `iniciar_sistema_simples.ps1` - Inicia o sistema em modo simples
+- `iniciar_sistema.ps1` - Menu interativo de inicialização
+- `scripts\iniciar_backend.js` - Inicia apenas o backend
+- `scripts\iniciar_whatsapp.js` - Inicia apenas o WhatsApp
+- `scripts\iniciar_nginx_manual.ps1` - Inicia o nginx manualmente
+- `chatbot\iniciar_chatbot.js` - Inicia apenas o chatbot
 
 ### 🔴 Scripts de Finalização
-- `fechar_sistema_completo.ps1` - Para todo o sistema
-- `fechar_sistema.ps1` - Para processos básicos
+- `scripts\fechar_sistema_completo_com_nginx.ps1` - Encerra todo o sistema com nginx
+- `scripts\fechar_sistema_completo.ps1` - Encerra o sistema sem nginx
+- `scripts\fechar_sistema.ps1` - Encerra o sistema simples
 
 ### ⚙️ Scripts de Configuração
 - `configurar_nginx.ps1` - Configura o nginx
@@ -111,6 +235,9 @@ npm start
 - `mostrar_urls.ps1` - Mostra URLs de acesso
 - `deploy_vercel_netlify.ps1` - Deploy híbrido (Backend Vercel + Frontend Netlify)
 - `deploy_vercel.ps1` - Deploy completo no Vercel
+
+### 📚 Documentação
+- `docs/GIT.md` - Guia de comandos Git para o projeto
 
 ## 🌐 URLs de Acesso
 
@@ -167,7 +294,7 @@ npm start
    - **Output Directory:** `.`
 6. Adicione variáveis de ambiente:
    - `NODE_ENV=production`
-   - `DB_PATH=./database/ouvidoria.db`
+   - `DB_PATH=N:\ouvidoria.db`
 
 #### **Frontend no Netlify:**
 1. Acesse https://netlify.com
@@ -202,7 +329,7 @@ Toda a documentação está organizada na pasta `docs/`:
 ## 🔧 Configuração
 
 ### Banco de Dados
-- **Localização:** `database/ouvidoria.db`
+- **Localização:** `N:\ouvidoria.db`
 - **Tipo:** SQLite
 - **Backup:** Automático
 
@@ -265,6 +392,7 @@ Toda a documentação está organizada na pasta `docs/`:
 2. Consulte a documentação em `docs/`
 3. Execute `.\scripts\verificar_nginx.ps1` para diagnóstico
 4. Verifique se o banco de dados está acessível
+5. Para problemas com Git, consulte o guia em `docs/GIT.md`
 
 ## 🔄 Manutenção
 
@@ -289,4 +417,4 @@ npm update
 
 ---
 
-**Desenvolvido para a Prefeitura Municipal de Venturosa** 🏛️ 
+**Desenvolvido para a Prefeitura Municipal de Venturosa** 🏛️
