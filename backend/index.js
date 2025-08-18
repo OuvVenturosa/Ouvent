@@ -7,6 +7,8 @@ const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 
+const port = process.env.PORT || 3001; 
+
 // Middleware
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',

@@ -15,6 +15,28 @@ const https = require('https');
 const http = require('http');
 
 // =============================================
+// IMPORTAÇÃO DO BANCO DE DADOS
+// =============================================
+// Importação do banco de dados movida para linha 35
+
+// =============================================
+// IMPORTAÇÃO DO BANCO DE DADOS
+// =============================================
+const {
+  salvarConversa,
+  salvarMensagem,
+  salvarOpcaoMenu,
+  salvarAnexo,
+  finalizarConversa,
+  buscarConversaPorProtocolo,
+  salvarRespostaResponsavel,
+  salvarConsultaProtocolo,
+  salvarAlteracaoStatus,
+  salvarInteracaoAdicional,
+  gerarRelatorioConversa
+} = require('./database');
+
+// =============================================
 // CONFIGURAÇÃO INICIAL
 // =============================================
 
@@ -99,32 +121,32 @@ const menuOptionsHistory = {};
 // =============================================
 
 // Lista de administradores (substitua pelos números reais com @c.us)
-const ADMINS = ['558788290579@c.us',];
+const ADMINS = ['558788290579@c.us', '558700000000@c.us'];
 
 // Constantes
 const SECRETARIAS_EMAILS = {
-    1: "hhnnunes@gmail.com", // Secretaria de Desenvolvimento Rural e Meio Ambiente ok
-    2: "allane_987@hotmail.com", // Secretaria de Assistência Social ok
-    3: "uildoba@bol.com.br", // Secretaria de Educação e Esporte ok
-    4: "sec.obras.pmv@gmail.com", // Secretaria de Infraestrutura e Segurança Pública ok
-    5: "ouvidoriasaudeventurosa@gmail.com", // Secretaria de Saúde e Direitos da Mulher ok
-    6: "manu_serpa@gmail.com", // Hospital e Maternidade Justa Maria Bezerra ok
-    7: "daneleonel021@gmail.com", // Programa Mulher Segura (Coordenadora da Mulher)ok
-    8: "cris.c.dasilva@hotmail.com", // Secretaria de Finanças - Setor de Tributos ok
-    9: "luizfbfilho@hotmail.com", // Secretaria de Administração - Servidores Municipais ok
+    1: "aaa2306@gmail.com",
+    2: "aaa2306@gmail.com",
+    3: "educacao.esporte@venturosa.pe.gov.br",
+    4: "infraestrutura.seguranca@venturosa.pe.gov.br",
+    5: "saude.mulher@venturosa.pe.gov.br",
+    6: "hospital@venturosa.pe.gov.br",
+    7: "mulhersegura@venturosa.pe.gov.br",
+    8: "tributos@venturosa.pe.gov.br",
+    9: "Administração@venturosa.pe.gov.br"
 };
 
 // Adicionar esta nova constante para WhatsApp das secretárias
 const SECRETARIAS_WHATSAPP = {
-        1: "558791836313@c.us", // Secretaria de Desenvolvimento Rural e Meio Ambiente ok
-        2: "558791169666@c.us", // Secretaria de Assistência Social ok
-        3: "558791693603@c.us", // Secretaria de Educação e Esporte ok
-        4: "558791166817@c.us", // Secretaria de Infraestrutura e Segurança Pública ok
-        5: "558791328216@c.us", // Secretaria de Saúde e Direitos da Mulher ok
-        6: "558791215280@c.us", // Hospital e Maternidade Justa Maria Bezerra ok
-        7: "558791999719@c.us", // Programa Mulher Segura (Coordenadora da Mulher)ok
-        8: "558791193912@c.us", // Secretaria de Finanças - Setor de Tributos ok
-        9: "558791087475@c.us"  // Secretaria de Administração - Servidores Municipais ok
+        1: "558781825296@c.us", // Secretaria de Desenvolvimento Rural e Meio Ambiente
+        2: "558701117150@c.us", // Secretaria de Assistência Social
+        3: "558708414768@c.us", // Secretaria de Educação e Esporte
+        4: "558708414768@c.us", // Secretaria de Infraestrutura e Segurança Pública
+        5: "558708414768@c.us", // Secretaria de Saúde e Direitos da Mulher
+        6: "558708414768@c.us", // Hospital e Maternidade Justa Maria Bezerra
+        7: "558708414768@c.us", // Programa Mulher Segura
+        8: "558708414768@c.us", // Secretaria de Finanças - Setor de Tributos
+        9: "558708414768@c.us"  // Secretaria de Administração - Servidores Municipais
     
 };
 
@@ -200,17 +222,40 @@ async function notificarSecretariaWhatsApp(secretariaNumero, protocolNumber, ate
 // =============================================  
 
 // Função para registrar as opções selecionadas
-function registrarOpcao(senderId, menu, opcao, titulo) {
+async function registrarOpcao(senderId, menu, opcao, titulo, protocolo = null) {
+  // Salvar na memória local (mantém compatibilidade)
   if (!menuOptionsHistory[senderId]) {
     menuOptionsHistory[senderId] = [];
   }
   
-  menuOptionsHistory[senderId].push({
+  const opcaoData = {
     menu,
     opcao,
     titulo,
     timestamp: new Date().toISOString()
-  });
+  };
+  
+  menuOptionsHistory[senderId].push(opcaoData);
+  
+  // Salvar no banco de dados se houver protocolo
+  if (protocolo) {
+    try {
+      const conversa = await buscarConversaPorProtocolo(protocolo);
+      if (conversa) {
+        await salvarOpcaoMenu({
+          conversa_id: conversa.id,
+          protocolo: protocolo,
+          sender_id: senderId,
+          menu: menu,
+          opcao: opcao,
+          titulo: titulo,
+          timestamp: opcaoData.timestamp
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro ao salvar opção de menu no banco:', error);
+    }
+  }
 }
 
 // Função para agendar o relatório mensal
@@ -249,16 +294,10 @@ function getGreeting() {
     return "Boa noite";
 }
 
-function generateProtocolNumber() {
-    const now = new Date();
-    const year = now.getFullYear().toString().slice(-2);
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const day = now.getDate().toString().padStart(2, '0');
-    const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return `OUV${month}${day}${year}/${randomNum}`;
-}
+// Função generateProtocolNumber movida para linha 566
 
-function registrarInteracao(senderId, mensagem, origem) {
+async function registrarInteracao(senderId, mensagem, origem, protocolo = null) {
+    // Salvar na memória local (mantém compatibilidade)
     if (!conversationHistory[senderId]) {
         conversationHistory[senderId] = {
             messages: [],
@@ -269,6 +308,27 @@ function registrarInteracao(senderId, mensagem, origem) {
     conversationHistory[senderId].messages.push(mensagem);
     conversationHistory[senderId].timestamps.push(new Date().toISOString());
     conversationHistory[senderId].origem.push(origem);
+
+    // Salvar no banco de dados se houver protocolo
+    if (protocolo) {
+        try {
+            // Buscar conversa existente
+            const conversa = await buscarConversaPorProtocolo(protocolo);
+            if (conversa) {
+                // Salvar mensagem no banco
+                await salvarMensagem({
+                    conversa_id: conversa.id,
+                    protocolo: protocolo,
+                    sender_id: senderId,
+                    mensagem: mensagem,
+                    origem: origem,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        } catch (error) {
+            console.error('❌ Erro ao salvar interação no banco:', error);
+        }
+    }
 }
 
 
@@ -378,13 +438,36 @@ async function handleMediaMessage(msg, senderId) {
                 atendimentos[senderId].anexos = [];
             }
             
-            atendimentos[senderId].anexos.push({
+            const anexoData = {
                 tipo: mediaType,
                 caminho: filePath,
                 nomeOriginal: msg.body || fileName,
                 data: new Date().toISOString(),
                 mimeType: media.mimetype
-            });
+            };
+            
+            atendimentos[senderId].anexos.push(anexoData);
+            
+            // Salvar anexo no banco de dados se houver protocolo
+            if (atendimentos[senderId].protocolo) {
+                try {
+                    const conversa = await buscarConversaPorProtocolo(atendimentos[senderId].protocolo);
+                    if (conversa) {
+                        await salvarAnexo({
+                            conversa_id: conversa.id,
+                            protocolo: atendimentos[senderId].protocolo,
+                            sender_id: senderId,
+                            tipo: mediaType,
+                            caminho: filePath,
+                            nome_original: msg.body || fileName,
+                            mime_type: media.mimetype,
+                            data_envio: anexoData.data
+                        });
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao salvar anexo no banco:', error);
+                }
+            }
             
             await chat.sendMessage(`✅ ${mediaType.toUpperCase()} recebida com sucesso e anexada ao seu atendimento!\nDigite '77' para voltar ao menu anterior ou 'cancelar' para cancelar a operação.`);
             
@@ -533,7 +616,6 @@ async function salvarDemandaNoBanco(protocolo, atendimento) {
     return null;
   }
 }
-
 // Função para formatar a resposta do protocolo
 async function formatarRespostaProtocolo(atendimento, protocolNumber) {
   const secretariaMap = {
@@ -742,6 +824,47 @@ async function registrarRespostaProtocolo(protocolNumber, resposta, responsavel,
     atendimento.responsavelResposta = responsavel;
     atendimento.status = 'resolvido';
     
+    // Buscar conversa no banco de dados
+    const conversa = await buscarConversaPorProtocolo(protocolNumber);
+    if (conversa) {
+      // Salvar resposta no banco de dados
+      const respostaData = {
+        conversa_id: conversa.id,
+        protocolo: protocolNumber,
+        responsavel_id: responsavel,
+        responsavel_nome: responsavel,
+        responsavel_tipo: 'secretaria', // Pode ser 'secretaria' ou 'ouvidor'
+        secretaria: atendimento.secretaria,
+        resposta: resposta,
+        anexo_caminho: anexo,
+        anexo_nome: anexo ? path.basename(anexo) : null,
+        anexo_mime: anexo ? mime.lookup(anexo) : null,
+        data_resposta: new Date().toISOString(),
+        status_anterior: atendimento.status,
+        status_novo: 'resolvido',
+        observacoes: 'Resposta oficial registrada via WhatsApp'
+      };
+      
+      await salvarRespostaResponsavel(respostaData);
+      console.log('✅ Resposta salva no banco de dados:', protocolNumber);
+      
+      // Salvar alteração de status no banco
+      const statusData = {
+        protocolo: protocolNumber,
+        status_anterior: atendimento.status,
+        status_novo: 'resolvido',
+        responsavel_id: responsavel,
+        responsavel_nome: responsavel,
+        responsavel_tipo: 'secretaria',
+        data_alteracao: new Date().toISOString(),
+        motivo: 'Resposta oficial registrada',
+        observacoes: `Resposta: ${resposta}`
+      };
+      
+      await salvarAlteracaoStatus(statusData);
+      console.log('✅ Alteração de status salva no banco:', protocolNumber);
+    }
+    
     // Registra a atualização no histórico
     adicionarAtualizacaoProtocolo(
       protocolNumber,
@@ -792,6 +915,27 @@ async function adicionarComentarioProtocolo(protocolNumber, senderId, comentario
   
   const responsavel = isAdmin(senderId) ? 'Administrador' : notifyName;
   
+  // Salvar interação adicional no banco de dados
+  try {
+    const interacaoData = {
+      protocolo: protocolNumber,
+      sender_id: senderId,
+      nome_usuario: notifyName,
+      tipo_interacao: 'comentario',
+      mensagem: comentario,
+      anexo_caminho: null,
+      anexo_nome: null,
+      anexo_mime: null,
+      data_interacao: new Date().toISOString(),
+      origem: isAdmin(senderId) ? 'admin' : 'usuario'
+    };
+    
+    await salvarInteracaoAdicional(interacaoData);
+    console.log('✅ Comentário salvo no banco de dados:', protocolNumber);
+  } catch (error) {
+    console.error('❌ Erro ao salvar comentário no banco:', error);
+  }
+  
   adicionarAtualizacaoProtocolo(
     protocolNumber,
     responsavel,
@@ -836,6 +980,26 @@ async function adicionarComentarioProtocolo(protocolNumber, senderId, comentario
 // Função melhorada para consulta de protocolo
 async function consultarProtocolo(protocolNumber, senderId = null) {
   const atendimento = buscarAtendimentoPorProtocolo(protocolNumber);
+  
+  // Salvar consulta no banco de dados
+  try {
+    const consultaData = {
+      protocolo: protocolNumber,
+      sender_id: senderId,
+      nome_usuario: senderId ? (atendimento?.nome || 'Usuário') : 'Consulta Externa',
+      tipo_consulta: 'whatsapp',
+      mensagem_consulta: `Consulta de protocolo ${protocolNumber}`,
+      resposta_sistema: atendimento ? 'Protocolo encontrado' : 'Protocolo não encontrado',
+      data_consulta: new Date().toISOString(),
+      ip_origem: null,
+      user_agent: 'WhatsApp Bot'
+    };
+    
+    await salvarConsultaProtocolo(consultaData);
+    console.log('✅ Consulta de protocolo salva no banco:', protocolNumber);
+  } catch (error) {
+    console.error('❌ Erro ao salvar consulta no banco:', error);
+  }
   
   if (!atendimento) {
     return {
@@ -970,7 +1134,6 @@ function relatorioJaEnviado(mes, ano) {
         return false;
     }
 }
-
 // Função para gerar relatório mensal
 async function gerarRelatorioMensal(mes, ano) {
   try {
@@ -1518,7 +1681,6 @@ Agradecemos seu contato. Sua solicitação será encaminhada para análise e tra
 
   return relatorio;
 }
-
 // =============================================
 // FUNÇÕES DE RELATÓRIOS
 // =============================================
@@ -1536,6 +1698,34 @@ async function enviarRelatorios(senderId, protocolNumber) {
             atendimentos[senderId].protocolo = protocolNumber;
             atendimentos[senderId].status = 'aberto';
             atendimentos[senderId].dataRegistro = new Date().toISOString();
+        }
+
+        // Criar conversa no banco de dados
+        try {
+            const conversaData = {
+                protocolo: protocolNumber,
+                sender_id: senderId,
+                nome_usuario: atendimentos[senderId].nome || 'Usuário',
+                secretaria: atendimentos[senderId].secretaria || 1,
+                tipo_atendimento: atendimentos[senderId].tipo || 5,
+                anonimo: atendimentos[senderId].anonimo || false,
+                data_inicio: atendimentos[senderId].dataRegistro || new Date().toISOString(),
+                descricao: atendimentos[senderId].descricao || '',
+                servico_selecionado: atendimentos[senderId].servicoSelecionado || '',
+                detalhes_servico: atendimentos[senderId].detalhesServico || '',
+                data_ocorrido: atendimentos[senderId].dataOcorrido || '',
+                local_ocorrido: atendimentos[senderId].localOcorrido || '',
+                detalhes_adicionais: atendimentos[senderId].detalhesAdicionais || ''
+            };
+
+            const conversaId = await salvarConversa(conversaData);
+            console.log('✅ Conversa criada no banco com ID:', conversaId);
+            
+            // Atualizar o atendimento com o ID da conversa
+            atendimentos[senderId].conversaId = conversaId;
+            
+        } catch (error) {
+            console.error('❌ Erro ao criar conversa no banco:', error);
         }
 
         // Salvar demanda no banco de dados
@@ -1768,10 +1958,7 @@ function getRuralEnvironmentServicesMenu() {
 *1*: 🛣️ Manutenção de Estradas e Vias
 *2*: 🚜 Programa de Aração de Terras
 *3*: 👨‍🌾 Programa de Distribuição de Sementes
-*4*: 🚰 Operação Carro Pipa
-*5*: 🛣️ Perfuração de Poços Artesianos
-*6*: 🚜 Abertura e Limpeza de Barragens
-*7*: 👨‍🌾 Garantia Safra
+*4*: 🚰 Programa de Distribuição de Água
 
 *0*: 🔄 Voltar
 *00*: ✅ Finalizar Atendimento
@@ -2066,24 +2253,38 @@ function getLaboratoryTestsMenu() {
 *00*: ✅ Finalizar Atendimento
     `
 }
+// Função resetInactivityTimer já definida na linha 345
 
+// =============================================
+// FUNÇÕES DE HISTÓRICO
+// =============================================
 
-
-  // Função para resetar o temporizador de inatividade
-function resetInactivityTimer(senderId) {
-  if (userTimers[senderId]) {
-    clearTimeout(userTimers[senderId]);
+// Função para registrar opção de menu escolhida no histórico
+function registrarOpcaoMenuNoHistorico(senderId, nomeOpcao) {
+  if (!conversationHistory[senderId]) {
+    conversationHistory[senderId] = {
+      messages: [],
+      timestamps: [],
+      origem: []
+    };
   }
+  conversationHistory[senderId].messages.push(`Usuário selecionou: ${nomeOpcao}`);
+  conversationHistory[senderId].timestamps.push(new Date().toISOString());
+  conversationHistory[senderId].origem.push('menu');
+}
 
-  userTimers[senderId] = setTimeout(async () => {
-    const protocolNumber = generateProtocolNumber();
-    const chat = await client.getChatById(senderId);
-    await chat.sendMessage(`⏰ *Atendimento encerrado por inatividade*\n\nSeu protocolo é: *${protocolNumber}*\n\nCaso precise de mais informações, entre em contato novamente.`);
-
-    // Limpa o estado do usuário
-    delete userStates[senderId];
-    delete userTimers[senderId];
-  }, 300000); // 5 minutos em milissegundos
+// Função para registrar mensagem do bot no histórico
+function registrarMensagemBotNoHistorico(senderId, mensagem) {
+  if (!conversationHistory[senderId]) {
+    conversationHistory[senderId] = {
+      messages: [],
+      timestamps: [],
+      origem: []
+    };
+  }
+  conversationHistory[senderId].messages.push(`Bot: ${mensagem}`);
+  conversationHistory[senderId].timestamps.push(new Date().toISOString());
+  conversationHistory[senderId].origem.push('bot');
 }
 
 // =============================================
@@ -2147,7 +2348,8 @@ client.on("message", async (msg) => {
     }
 
     // Registrar mensagem do usuário
-    registrarInteracao(senderId, text, 'usuário');
+    const protocolo = atendimentos[senderId]?.protocolo;
+    await registrarInteracao(senderId, text, 'usuário', protocolo);
 
     // Inicializa o histórico de conversa se não existir
     if (!conversationHistory[senderId]) {
@@ -2534,26 +2736,7 @@ client.on("message", async (msg) => {
     return;
   }
   
-  // Exemplo de como atualizar um protocolo quando houver resposta:
-function registrarRespostaProtocolo(protocolNumber, resposta, responsavel) {
-  const atendimento = buscarAtendimentoPorProtocolo(protocolNumber);
-  
-  if (atendimento) {
-    atendimento.resposta = resposta;
-    atendimento.dataResposta = new Date().toISOString();
-    atendimento.status = 'resolvido'; // Ou outro status apropriado
-    
-    adicionarAtualizacaoProtocolo(
-      protocolNumber,
-      responsavel,
-      "Resposta enviada pela secretaria",
-      "resposta.pdf" // Opcional: nome do arquivo anexo
-    );
-    
-    return true;
-  }
-  return false;
-}
+// Função registrarRespostaProtocolo já definida na linha 824
 
   // Finaliza atendimento com "00"
 if (text === "00") {
@@ -2596,6 +2779,20 @@ if (text === "00") {
         );
     }
 
+    // Finalizar conversa no banco de dados
+    if (atendimentos[senderId]?.protocolo) {
+        try {
+            await finalizarConversa(
+                atendimentos[senderId].protocolo,
+                new Date().toISOString(),
+                'finalizado'
+            );
+            console.log('✅ Conversa finalizada no banco:', atendimentos[senderId].protocolo);
+        } catch (error) {
+            console.error('❌ Erro ao finalizar conversa no banco:', error);
+        }
+    }
+
     // Limpa o estado do usuário
     delete userStates[senderId];
     delete conversationHistory[senderId];
@@ -2634,63 +2831,72 @@ if (text === "00") {
     switch (text) {
       case "1":
         userState.mainMenu = 1;
-        registrarOpcao(senderId, "Principal", "1", "Sec. Desenv. Rural e Meio Ambiente");
+        const protocolo = atendimentos[senderId]?.protocolo;
+        await registrarOpcao(senderId, "Principal", "1", "Sec. Desenv. Rural e Meio Ambiente", protocolo);
         registrarOpcaoMenuNoHistorico(senderId, "Sec. Desenv. Rural e Meio Ambiente");
         await chat.sendMessage(getStandardSecretaryMenu("Sec. Desenv. Rural e Meio Ambiente"));
         registrarMensagemBotNoHistorico(senderId, getStandardSecretaryMenu("Sec. Desenv. Rural e Meio Ambiente"));
         break;
       case "2":
         userState.mainMenu = 2;
-        registrarOpcao(senderId, "Principal", "2", "Sec. Assistência Social");
+        const protocolo2 = atendimentos[senderId]?.protocolo;
+        await registrarOpcao(senderId, "Principal", "2", "Sec. Assistência Social", protocolo2);
         registrarOpcaoMenuNoHistorico(senderId, "Sec. Assistência Social");
         await chat.sendMessage(getStandardSecretaryMenu("Sec. Assistência Social"));
         registrarMensagemBotNoHistorico(senderId, getStandardSecretaryMenu("Sec. Assistência Social"));
         break;
       case "3":
         userState.mainMenu = 3;
-        registrarOpcao(senderId, "Principal", "3", "Sec. Educação e Esporte");
+        const protocolo3 = atendimentos[senderId]?.protocolo;
+        await registrarOpcao(senderId, "Principal", "3", "Sec. Educação e Esporte", protocolo3);
         registrarOpcaoMenuNoHistorico(senderId, "Sec. Educação e Esporte");
         await chat.sendMessage(getStandardSecretaryMenu("Sec. Educação e Esporte"));
         registrarMensagemBotNoHistorico(senderId, getStandardSecretaryMenu("Sec. Educação e Esporte"));
         break;
       case "4":
         userState.mainMenu = 4;
-        registrarOpcao(senderId, "Principal", "4", "Sec. Infraestrutura e Seg. Pública");
+        const protocolo4 = atendimentos[senderId]?.protocolo;
+        await registrarOpcao(senderId, "Principal", "4", "Sec. Infraestrutura e Seg. Pública", protocolo4);
         registrarOpcaoMenuNoHistorico(senderId, "Sec. Infraestrutura e Seg. Pública");
         await chat.sendMessage(getStandardSecretaryMenu("Sec. Infraestrutura e Seg. Pública"));
         registrarMensagemBotNoHistorico(senderId, getStandardSecretaryMenu("Sec. Infraestrutura e Seg. Pública"));
         break;
       case "5":
         userState.mainMenu = 5;
-        registrarOpcao(senderId, "Principal", "5", "Sec. Saúde e dos Direitos da Mulher");
+        const protocolo5 = atendimentos[senderId]?.protocolo;
+        await registrarOpcao(senderId, "Principal", "5", "Sec. Saúde e dos Direitos da Mulher", protocolo5);
         registrarOpcaoMenuNoHistorico(senderId, "Sec. Saúde e dos Direitos da Mulher");
         await chat.sendMessage(getStandardSecretaryMenu("Sec. Saúde e dos Direitos da Mulher"));
         registrarMensagemBotNoHistorico(senderId, getStandardSecretaryMenu("Sec. Saúde e dos Direitos da Mulher"));
         break;
       case "6":
         userState.mainMenu = 6;
-        registrarOpcao(senderId, "Principal", "6", "Hosp. e Matern. Justa Maria Bezerra");
+        const protocolo6 = atendimentos[senderId]?.protocolo;
+        await registrarOpcao(senderId, "Principal", "6", "Hosp. e Matern. Justa Maria Bezerra", protocolo6);
         registrarOpcaoMenuNoHistorico(senderId, "Hosp. e Matern. Justa Maria Bezerra");
         await chat.sendMessage(getStandardSecretaryMenu("Hosp. e Matern. Justa Maria Bezerra"));
         registrarMensagemBotNoHistorico(senderId, getStandardSecretaryMenu("Hosp. e Matern. Justa Maria Bezerra"));
         break;
       case "7":
         userState.mainMenu = 7;
-        registrarOpcao(senderId, "Principal", "7", "Programa Mulher Segura");
+        const protocolo7 = atendimentos[senderId]?.protocolo;
+        await registrarOpcao(senderId, "Principal", "7", "Programa Mulher Segura", protocolo7);
         registrarOpcaoMenuNoHistorico(senderId, "Programa Mulher Segura");
         await chat.sendMessage(getStandardSecretaryMenu("Programa Mulher Segura"));
         registrarMensagemBotNoHistorico(senderId, getStandardSecretaryMenu("Programa Mulher Segura"));
         break;
       case "8":
         userState.mainMenu = 8;
-        registrarOpcao(senderId, "Principal", "8", "Sec. Finanças - Setor Tributário");
+        const protocolo8 = atendimentos[senderId]?.protocolo;
+        await registrarOpcao(senderId, "Principal", "8", "Sec. Finanças - Setor Tributário", protocolo8);
         registrarOpcaoMenuNoHistorico(senderId, "Sec. Finanças - Setor Tributário");
         await chat.sendMessage(getStandardSecretaryMenu("Sec. Finanças - Setor Tributário"));
         registrarMensagemBotNoHistorico(senderId, getStandardSecretaryMenu("Sec. Finanças - Setor Tributário"));
         break;
       case "9":
         userState.mainMenu = 9;
-        registrarOpcao(senderId, "Principal", "9", "Sec. de Administração - (Servidores Municipais)");
+        const protocolo9 = atendimentos[senderId]?.protocolo;
+        await registrarOpcao(senderId, "Principal", "9", "Sec. de Administração - (Servidores Municipais)", protocolo9);
         registrarOpcaoMenuNoHistorico(senderId, "Sec. de Administração - (Servidores Municipais)");
         await chat.sendMessage(getStandardSecretaryMenu("Sec. de Administração - (Servidores Municipais)"));
         registrarMensagemBotNoHistorico(senderId, getStandardSecretaryMenu("Sec. de Administração - (Servidores Municipais)"));
@@ -2983,84 +3189,26 @@ case "3":
     break;
 
 case "4":
-    registrarOpcao(senderId, "Serviços Rurais", "4", "Operação Carro Pipa");
-    registrarOpcaoMenuNoHistorico(senderId, "Operação Carro Pipa");
-    atendimentos[senderId].servicoSelecionado = "Serviços Rurais - Operação Carro Pipa";
+    registrarOpcao(senderId, "Serviços Rurais", "4", "Distribuição de Água");
+    registrarOpcaoMenuNoHistorico(senderId, "Distribuição de Água");
+    atendimentos[senderId].servicoSelecionado = "Serviços Rurais - Distribuição de Água";
     
-    const msgAgua = "*OPERAÇÃO CARRO PIPA*\n\n" +
+    const msgAgua = "*PROGRAMA DE DISTRIBUIÇÃO DE ÁGUA*\n\n" +
                    "● Como participar:\n" +
                    "   - Cadastro prévio na Secretaria de Agricultura\n" +
                    "   - Comprovar necessidade hídrica\n" +
                    "   - Ter propriedade na zona rural\n\n" +
                    "● Frequência:\n" +
-                   "   - Caminhão-pipa: Depende da demanda populacional\n" +
+                   "   - Caminhão-pipa: quinzenal\n" +
                    "   - Prioridade para áreas críticas\n\n" +
                    "🔴 ATENÇÃO 🔴\n" +
                    "Emergências: contatar Defesa Civil\n" +
-                   "Telefone: 199\n\n" +
+                   "Telefone: (XX) XXXX-XXXX\n\n" +
                    "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
     
     await chat.sendMessage(msgAgua);
     registrarMensagemBotNoHistorico(senderId, msgAgua);
     break;
-
-    case "5":
-    registrarOpcao(senderId, "Serviços Rurais", "5", "Perfuração de Poços Artesianos");
-    registrarOpcaoMenuNoHistorico(senderId, "Perfuração de Poços Artesianos");
-    atendimentos[senderId].servicoSelecionado = "Serviços Rurais - Perfuração de Poços Artesianos";
-
-    const msgPocos = "*PERFURAÇÃO DE POÇOS ARTESIANOS*\n\n" +
-                     "● Como participar:\n" +
-                     "   - Cadastro prévio na Secretaria de Agricultura\n" +
-                     "   - Comprovar residência no Municipio de Venturosa\n" +
-                     "   - Apresentar documentos pessoais e da propriedade\n\n" +
-                     "● Serviços oferecidos:\n" +
-                     "   - Perfuração e instalação de poço artesiano\n" +
-                     "   - Análise e testes da água\n\n" +
-                     "● Observação:\n" +
-                     "   - Prioridade para famílias em situação de vulnerabilidade hídrica\n";
-
-    enviarMensagem(senderId, msgPocos);
-    break;
-
-case "6":
-    registrarOpcao(senderId, "Serviços Rurais", "6", "Abertura e Limpeza de Barragens");
-    registrarOpcaoMenuNoHistorico(senderId, "Abertura e Limpeza de Barragens");
-    atendimentos[senderId].servicoSelecionado = "Serviços Rurais - Abertura e Limpeza de Barragens";
-
-    const msgBarragens = "*ABERTURA E LIMPEZA DE BARRAGENS*\n\n" +
-                        "● Como solicitar:\n" +
-                        "   - Procurar a Secretaria de Agricultura para cadastro\n" +
-                        "   - Apresentar documento de propriedade rural\n\n" +
-                        "● Serviços realizados:\n" +
-                        "   - Limpeza e desassoreamento de barragens\n" +
-                        "   - Manutenção e conservação de reservatórios\n\n" +
-                        "● Benefícios:\n" +
-                        "   - Melhora no armazenamento de água para a agricultura\n" +
-                        "   - Redução de riscos ambientais\n";
-
-    enviarMensagem(senderId, msgBarragens);
-    break;
-
-case "7":
-    registrarOpcao(senderId, "Serviços Rurais", "7", "Garantia Safra");
-    registrarOpcaoMenuNoHistorico(senderId, "Garantia Safra");
-    atendimentos[senderId].servicoSelecionado = "Serviços Rurais - Garantia Safra";
-
-    const msgGarantiaSafra = "*GARANTIA SAFRA*\n\n" +
-                            "● Como participar:\n" +
-                            "   - Cadastro na Secretaria de Agricultura\n" +
-                            "   - Apresentar RG, CPF, e cadastro no CAF\n" +
-                            "   - Cadastro CAF: Reaalizado no Instituto Agronômico de Pernambuco - IPA\n" +
-                            "   - Comprovar exploração rural familiar\n\n" +
-                            "● Benefício:\n" +
-                            "   - Apoio financeiro em caso de perda de safra por seca ou excesso de chuva\n\n" +
-                            "● Observação:\n" +
-                            "   - Importante para manter a renda e segurança alimentar das famílias rurais\n";
-
-    enviarMensagem(senderId, msgGarantiaSafra);
-    break;
-
                  }
                  break;
 
@@ -3341,7 +3489,7 @@ case "5":
             await chat.sendMessage("Opção inválida. Por favor, escolha uma opção válida.");
         }
         break;
-        case 6: // Hosp. e Matern. Justa Maria Bezerra
+        case 6: // Hosp. e Matern. Justa Mª Bezerra
         switch (text) {
           case "1":
     userState.subSubMenu = 1;
@@ -3397,7 +3545,6 @@ case "2":
   await chat.sendMessage(msgAtendimento2);
   registrarMensagemBotNoHistorico(senderId, msgAtendimento2);
   break;
-
 case "3":
   registrarOpcao(senderId, "Mulher Segura", "3", "Acolhimento Emergencial");
   registrarOpcaoMenuNoHistorico(senderId, "Acolhimento Emergencial");
@@ -3417,334 +3564,6 @@ case "3":
   await chat.sendMessage(msgAtendimento3);
   registrarMensagemBotNoHistorico(senderId, msgAtendimento3);
   break;
-            }
-            break;
-            case 8: // Sec. Finanças - Setor de Tributos
-        switch (text) {
-          case "1":
-            registrarOpcao(senderId, "Tributos", "1", "ISSQN - Imposto Sobre Serviços de Qualquer Natureza");
-            registrarOpcaoMenuNoHistorico(senderId, "ISSQN");
-            atendimentos[senderId].servicoSelecionado = "ISSQN - Imposto Sobre Serviços";
-            const msgIssqn = "*ISSQN - Imposto Sobre Serviços de Qualquer Natureza*\n\n" +
-                            "● Formas de Solicitação:\n" +
-                            "   - Online: Envie os documentos listados abaixo\n" +
-                            "   - Presencial: Secretaria de Finanças - Setor de Tributos\n\n" +
-                            "● Documentos Necessários:\n" +
-                            "   - RG e CPF\n" +
-                            "   - Contrato social (para PJ)\n" +
-                            "   - Notas fiscais de serviços\n" +
-                            "   - Comprovantes de pagamento\n" +
-                            "   - Documentos específicos da atividade\n\n" +
-                            "🔴 ATENÇÃO 🔴\n" +
-                            "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                            "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-            await chat.sendMessage(msgIssqn);
-            registrarMensagemBotNoHistorico(senderId, msgIssqn);
-            break;
-          
-          case "2":
-            registrarOpcao(senderId, "Tributos", "2", "IPTU - Imposto Predial e Territorial Urbano");
-            registrarOpcaoMenuNoHistorico(senderId, "IPTU");
-            atendimentos[senderId].servicoSelecionado = "IPTU - Imposto Predial";
-            const msgIptu = "*IPTU - Imposto Predial e Territorial Urbano*\n\n" +
-                           "● Forma de Solicitação:\n" +
-                           "   - Presencial: Secretaria de Finanças - Setor de Tributos\n\n" +
-                           "🔴 ATENÇÃO 🔴\n" +
-                           "Este serviço é realizado apenas de forma presencial\n\n" +
-                           "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-            await chat.sendMessage(msgIptu);
-            registrarMensagemBotNoHistorico(senderId, msgIptu);
-            break;
-          
-          case "3":
-            registrarOpcao(senderId, "Tributos", "3", "ITBI - Imposto de Transmissão de Bens Imóveis");
-            registrarOpcaoMenuNoHistorico(senderId, "ITBI");
-            atendimentos[senderId].servicoSelecionado = "ITBI - Transmissão de Bens";
-            const msgItbi = "*ITBI - Imposto de Transmissão de Bens Imóveis*\n\n" +
-                           "● Forma de Solicitação:\n" +
-                           "   - Presencial: Secretaria de Finanças - Setor de Tributos\n\n" +
-                           "🔴 ATENÇÃO 🔴\n" +
-                           "Este serviço é realizado apenas de forma presencial\n\n" +
-                           "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-            await chat.sendMessage(msgItbi);
-            registrarMensagemBotNoHistorico(senderId, msgItbi);
-            break;
-          
-          case "4":
-            registrarOpcao(senderId, "Tributos", "4", "Alvará");
-            registrarOpcaoMenuNoHistorico(senderId, "Alvará");
-            atendimentos[senderId].servicoSelecionado = "Alvará Municipal";
-            const msgAlvara = "*ALVARÁ*\n\n" +
-                             "● Forma de Solicitação:\n" +
-                             "   - Presencial: Secretaria de Finanças - Setor de Tributos\n\n" +
-                             "● Serviço:\n" +
-                             "   - Cadastro para emissão de alvará\n\n" +
-                             "🔴 ATENÇÃO 🔴\n" +
-                             "Este serviço é realizado apenas de forma presencial\n\n" +
-                             "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-            await chat.sendMessage(msgAlvara);
-            registrarMensagemBotNoHistorico(senderId, msgAlvara);
-            break;
-          
-          case "5":
-            registrarOpcao(senderId, "Tributos", "5", "Declaração Negativa");
-            registrarOpcaoMenuNoHistorico(senderId, "Declaração Negativa");
-            atendimentos[senderId].servicoSelecionado = "Declaração Negativa";
-            const msgDeclaracao = "*DECLARAÇÃO NEGATIVA*\n\n" +
-                                 "● Forma de Solicitação:\n" +
-                                 "   - Presencial: Secretaria de Finanças - Setor de Tributos\n\n" +
-                                 "🔴 ATENÇÃO 🔴\n" +
-                                 "Este serviço é realizado apenas de forma presencial\n\n" +
-                                 "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-            await chat.sendMessage(msgDeclaracao);
-            registrarMensagemBotNoHistorico(senderId, msgDeclaracao);
-            break;
-                }
-                break;
-          case 9: // Sec. Administração - Servidores Municipais
-        switch (text) {
-case "1":
-  registrarOpcao(senderId, "Administração", "1", "CONTRACHEQUE - Emissão");
-  registrarOpcaoMenuNoHistorico(senderId, "CONTRACHEQUE - Emissão");
-  atendimentos[senderId].servicoSelecionado = "CONTRACHEQUE - Emissão";
-  const msgContracheque = "*CONTRACHEQUE - Emissão*\n\n" +
-                        "● Forma Online:\n" +
-                        "   - Passo 1: Acesse o sistema\n" +
-                        "   - Passo 2: Selecione a opção\n" +
-                        "   - Passo 3: Faça o download\n\n" +
-                        "● Forma Presencial:\n" +
-                        "   - Local: Secretaria de Administração\n\n" +
-                        "🔴 ATENÇÃO 🔴\n" +
-                        "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                        "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgContracheque);
-  registrarMensagemBotNoHistorico(senderId, msgContracheque);
-  break;
-
-case "2":
-  registrarOpcao(senderId, "Administração", "2", "Margem Consignável");
-  registrarOpcaoMenuNoHistorico(senderId, "Margem Consignável");
-  atendimentos[senderId].servicoSelecionado = "Margem Consignável";
-  const msgMargem = "*Margem Consignável*\n\n" +
-                  "● Forma Online:\n" +
-                  "   - Passo 1: Acesse o sistema\n" +
-                  "   - Passo 2: Preencha o formulário\n" +
-                  "   - Passo 3: Envie os documentos\n\n" +
-                  "● Forma Presencial:\n" +
-                  "   - Local: Secretaria de Administração\n\n" +
-                  "🔴 ATENÇÃO 🔴\n" +
-                  "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                  "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgMargem);
-  registrarMensagemBotNoHistorico(senderId, msgMargem);
-  break;
-
-case "3":
-  registrarOpcao(senderId, "Administração", "3", "Licença Médica");
-  registrarOpcaoMenuNoHistorico(senderId, "Licença Médica");
-  atendimentos[senderId].servicoSelecionado = "Licença Médica";
-  const msgLicencaMedica = "*Licença Médica*\n\n" +
-                         "● Forma Presencial:\n" +
-                         "   - Local: Secretaria de Administração\n\n" +
-                         "● Documentos Necessários:\n" +
-                         "   - Atestado médico original com CID\n" +
-                         "   - RG e CPF\n" +
-                         "   - Matrícula\n\n" +
-                         "🔴 ATENÇÃO 🔴\n" +
-                         "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                         "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgLicencaMedica);
-  registrarMensagemBotNoHistorico(senderId, msgLicencaMedica);
-  break;
-
-case "4":
-  registrarOpcao(senderId, "Administração", "4", "Licença Prêmio/Concessão");
-  registrarOpcaoMenuNoHistorico(senderId, "Licença Prêmio/Concessão");
-  atendimentos[senderId].servicoSelecionado = "Licença Prêmio/Concessão";
-  const msgLicencaPremio = "*Licença Prêmio/Concessão*\n\n" +
-                          "● Forma Presencial:\n" +
-                          "   - Local: Secretaria de Administração\n\n" +
-                          "● Documentos Necessários:\n" +
-                          "   - RG e CPF\n" +
-                          "   - Matrícula\n\n" +
-                          "🔴 ATENÇÃO 🔴\n" +
-                          "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                          "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgLicencaPremio);
-  registrarMensagemBotNoHistorico(senderId, msgLicencaPremio);
-  break;
-
-case "5":
-  registrarOpcao(senderId, "Administração", "5", "Licença Prêmio/Gozo");
-  registrarOpcaoMenuNoHistorico(senderId, "Licença Prêmio/Gozo");
-  atendimentos[senderId].servicoSelecionado = "Licença Prêmio/Gozo";
-  const msgLicencaGozo = "*Licença Prêmio/Gozo*\n\n" +
-                        "● Forma Presencial:\n" +
-                        "   - Local: Secretaria de Administração\n\n" +
-                        "● Documentos Necessários:\n" +
-                        "   - RG e CPF\n" +
-                        "   - Matrícula\n\n" +
-                        "🔴 ATENÇÃO 🔴\n" +
-                        "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                        "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgLicencaGozo);
-  registrarMensagemBotNoHistorico(senderId, msgLicencaGozo);
-  break;
-
-case "6":
-  registrarOpcao(senderId, "Administração", "6", "Licença Sem Vencimento");
-  registrarOpcaoMenuNoHistorico(senderId, "Licença Sem Vencimento");
-  atendimentos[senderId].servicoSelecionado = "Licença Sem Vencimento";
-  const msgLicencaSV = "*Licença Sem Vencimento*\n\n" +
-                      "● Forma Presencial:\n" +
-                      "   - Local: Secretaria de Administração\n\n" +
-                      "● Documentos Necessários:\n" +
-                      "   - RG e CPF\n" +
-                      "   - Matrícula\n\n" +
-                      "🔴 ATENÇÃO 🔴\n" +
-                      "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                      "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgLicencaSV);
-  registrarMensagemBotNoHistorico(senderId, msgLicencaSV);
-  break;
-
-case "7":
-  registrarOpcao(senderId, "Administração", "7", "Licença de Matrimônio");
-  registrarOpcaoMenuNoHistorico(senderId, "Licença de Matrimônio");
-  atendimentos[senderId].servicoSelecionado = "Licença de Matrimônio";
-  const msgMatrimonio = "*Licença de Matrimônio*\n\n" +
-                       "● Forma Presencial:\n" +
-                       "   - Local: Secretaria de Administração\n\n" +
-                       "● Documentos Necessários:\n" +
-                       "   - RG e CPF\n" +
-                       "   - Matrícula\n\n" +
-                       "🔴 ATENÇÃO 🔴\n" +
-                       "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                       "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgMatrimonio);
-  registrarMensagemBotNoHistorico(senderId, msgMatrimonio);
-  break;
-
-case "8":
-  registrarOpcao(senderId, "Administração", "8", "Mudança de Nome");
-  registrarOpcaoMenuNoHistorico(senderId, "Mudança de Nome");
-  atendimentos[senderId].servicoSelecionado = "Mudança de Nome";
-  const msgMudancaNome = "*Mudança de Nome*\n\n" +
-                        "● Forma Presencial:\n" +
-                        "   - Local: Secretaria de Administração\n\n" +
-                        "● Documentos Necessários:\n" +
-                        "   - RG e CPF\n" +
-                        "   - Matrícula\n\n" +
-                        "🔴 ATENÇÃO 🔴\n" +
-                        "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                        "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgMudancaNome);
-  registrarMensagemBotNoHistorico(senderId, msgMudancaNome);
-  break;
-
-case "9":
-  registrarOpcao(senderId, "Administração", "9", "Gratificação");
-  registrarOpcaoMenuNoHistorico(senderId, "Gratificação");
-  atendimentos[senderId].servicoSelecionado = "Gratificação";
-  const msgGratificacao = "*Gratificação*\n\n" +
-                         "● Forma Presencial:\n" +
-                         "   - Local: Secretaria de Administração\n\n" +
-                         "🔴 ATENÇÃO 🔴\n" +
-                         "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                         "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgGratificacao);
-  registrarMensagemBotNoHistorico(senderId, msgGratificacao);
-  break;
-
-case "10":
-  registrarOpcao(senderId, "Administração", "10", "Licença de Gestação");
-  registrarOpcaoMenuNoHistorico(senderId, "Licença de Gestação");
-  atendimentos[senderId].servicoSelecionado = "Licença de Gestação";
-  const msgGestacao = "*Licença de Gestação*\n\n" +
-                     "● Forma Presencial:\n" +
-                     "   - Local: Secretaria de Administração\n\n" +
-                     "● Documentos Necessários:\n" +
-                     "   - Atestado médico com data prevista do parto\n" +
-                     "   - Certidão de nascimento após o parto\n" +
-                     "   - RG e CPF\n" +
-                     "   - Matrícula\n\n" +
-                     "🔴 ATENÇÃO 🔴\n" +
-                     "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                     "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgGestacao);
-  registrarMensagemBotNoHistorico(senderId, msgGestacao);
-  break;
-
-case "11":
-  registrarOpcao(senderId, "Administração", "11", "A Disposição");
-  registrarOpcaoMenuNoHistorico(senderId, "A Disposição");
-  atendimentos[senderId].servicoSelecionado = "A Disposição";
-  const msgDisposicao = "*A Disposição*\n\n" +
-                       "● Forma Presencial:\n" +
-                       "   - Local: Secretaria de Administração\n\n" +
-                       "🔴 ATENÇÃO 🔴\n" +
-                       "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                       "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgDisposicao);
-  registrarMensagemBotNoHistorico(senderId, msgDisposicao);
-  break;
-
-case "12":
-  registrarOpcao(senderId, "Administração", "12", "Exoneração");
-  registrarOpcaoMenuNoHistorico(senderId, "Exoneração");
-  atendimentos[senderId].servicoSelecionado = "Exoneração";
-  const msgExoneracao = "*Exoneração*\n\n" +
-                       "● Forma Presencial:\n" +
-                       "   - Local: Secretaria de Administração\n\n" +
-                       "🔴 ATENÇÃO 🔴\n" +
-                       "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                       "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgExoneracao);
-  registrarMensagemBotNoHistorico(senderId, msgExoneracao);
-  break;
-
-case "13":
-  registrarOpcao(senderId, "Administração", "13", "Aposentadoria");
-  registrarOpcaoMenuNoHistorico(senderId, "Aposentadoria");
-  atendimentos[senderId].servicoSelecionado = "Aposentadoria";
-  const msgAposentadoria = "*Aposentadoria*\n\n" +
-                          "● Forma Presencial:\n" +
-                          "   - Local: Secretaria de Administração\n\n" +
-                          "🔴 ATENÇÃO 🔴\n" +
-                          "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                          "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgAposentadoria);
-  registrarMensagemBotNoHistorico(senderId, msgAposentadoria);
-  break;
-
-case "14":
-  registrarOpcao(senderId, "Administração", "14", "Salário Família");
-  registrarOpcaoMenuNoHistorico(senderId, "Salário Família");
-  atendimentos[senderId].servicoSelecionado = "Salário Família";
-  const msgSalarioFamilia = "*Salário Família*\n\n" +
-                           "● Forma Presencial:\n" +
-                           "   - Local: Secretaria de Administração\n\n" +
-                           "🔴 ATENÇÃO 🔴\n" +
-                           "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                           "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgSalarioFamilia);
-  registrarMensagemBotNoHistorico(senderId, msgSalarioFamilia);
-  break;
-
-case "15":
-  registrarOpcao(senderId, "Administração", "15", "CTC - Certidão de Tempo de Contribuição");
-  registrarOpcaoMenuNoHistorico(senderId, "CTC - Certidão de Tempo de Contribuição");
-  atendimentos[senderId].servicoSelecionado = "CTC - Certidão de Tempo de Contribuição";
-  const msgCTC = "*CTC - Certidão de Tempo de Contribuição*\n\n" +
-                "● Forma Presencial:\n" +
-                "   - Local: Secretaria de Administração\n\n" +
-                "🔴 ATENÇÃO 🔴\n" +
-                "As informações serão encaminhadas automaticamente ao setor responsável\n\n" +
-                "*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgCTC);
-  registrarMensagemBotNoHistorico(senderId, msgCTC);
-  break;
-
 case "16":
   registrarOpcao(senderId, "Administração", "16", "DTC - Declaração de Tempo de Contribuição");
   registrarOpcaoMenuNoHistorico(senderId, "DTC - Declaração de Tempo de Contribuição");
@@ -4246,7 +4065,593 @@ case "12":
   registrarMensagemBotNoHistorico(senderId, msgPsicopedagogo);
   break;
 
-case "4":
+  case "0":
+    userState.subSubMenu = 0;
+    await chat.sendMessage(getHealthWomensRightsServicesMenu());
+    break;
+    }
+    }
+
+}
+  // Bloco separado para subSubMenu === 2
+  if (userState.subSubMenu === 2) {
+  // CEO - Centro de Especialidades Odontológicas
+  switch (text) {
+      case "1":
+          registrarOpcao(senderId, "CEO", "1", "Endodontista");
+          registrarOpcaoMenuNoHistorico(senderId, "Endodontista");
+          atendimentos[senderId].servicoDetalhado = "Endodontista - Dra. Andreza (Segundas e Quintas) e Dr. João (Quintas e Sextas)";
+          
+          const msgEndodontista = `*ENDODONTISTA*\n\n
+          ● Especialistas: Dra. Andreza e Dr. João\n
+          ● Dias de atendimento:\n
+          - Dra. Andreza: Segundas (manhã/tarde) e Quintas (tarde)\n
+          - Dr. João: Quintas (manhã) e Sextas (manhã/tarde)\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao CEO com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgEndodontista);
+          registrarMensagemBotNoHistorico(senderId, msgEndodontista);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "2":
+          registrarOpcao(senderId, "CEO", "2", "Patologista Bucal");
+          registrarOpcaoMenuNoHistorico(senderId, "Patologista Bucal");
+          atendimentos[senderId].servicoDetalhado = "Patologista Bucal - Dr. Ricardo (Quintas, a partir das 18:00)";
+          
+          const msgPatologista = `*PATOLOGISTA BUCAL*\n\n
+          ● Especialista: Dr. Ricardo\n
+          ● Dia de atendimento: Quintas\n
+          ● Horário: A partir das 18:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao CEO com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgPatologista);
+          registrarMensagemBotNoHistorico(senderId, msgPatologista);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "3":
+          registrarOpcao(senderId, "CEO", "3", "Periodontista");
+          registrarOpcaoMenuNoHistorico(senderId, "Periodontista");
+          atendimentos[senderId].servicoDetalhado = "Periodontista - Dra. Isadora (Terças, Quartas e Quintas - manhã)";
+          
+          const msgPeriodontista = `*PERIODONTISTA*\n\n
+          ● Especialista: Dra. Isadora\n
+          ● Dias de atendimento: Terças, Quartas e Quintas (manhã)\n
+          ● Horário: 8:00 às 13:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao CEO com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgPeriodontista);
+          registrarMensagemBotNoHistorico(senderId, msgPeriodontista);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "4":
+          registrarOpcao(senderId, "CEO", "4", "Radiologista");
+          registrarOpcaoMenuNoHistorico(senderId, "Radiologista");
+          atendimentos[senderId].servicoDetalhado = "Radiologista (Segundas e Quartas)";
+          
+          const msgRadiologista = `*RADIOLOGISTA*\n\n
+          ● Dias de atendimento: Segundas e Quartas\n
+          ● Horário: 8:00 às 13:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao CEO com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgRadiologista);
+          registrarMensagemBotNoHistorico(senderId, msgRadiologista);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "5":
+          registrarOpcao(senderId, "CEO", "5", "Traumatologista Bucomaxilofacial");
+          registrarOpcaoMenuNoHistorico(senderId, "Traumatologista Bucomaxilofacial");
+          atendimentos[senderId].servicoDetalhado = "Traumatologista Bucomaxilofacial - Dr. Jonas, Dr. Anistean e Dr. Ricardo";
+          
+          const msgTraumatologista = `*TRAUMATOLOGISTA BUCOMAXILOFACIAL (Cirurgia)*\n\n
+          ● Especialistas:\n
+          - Dr. Jonas: Terças (manhã/tarde) e Quintas (tarde)\n
+          - Dr. Anistean: Terças (manhã/tarde) e Quintas (manhã)\n
+          - Dr. Ricardo: Quintas (quinzenal - noite)\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar cirurgia, compareça ao CEO para avaliação com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgTraumatologista);
+          registrarMensagemBotNoHistorico(senderId, msgTraumatologista);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "6":
+          registrarOpcao(senderId, "CEO", "6", "Odontopediatria/PCD");
+          registrarOpcaoMenuNoHistorico(senderId, "Odontopediatria/PCD");
+          atendimentos[senderId].servicoDetalhado = "Odontopediatra e PcD - Dra. Rhanelle e Dra. Samylla";
+          
+          const msgOdontopediatria = `*ODONTOLOGISTA PEDIATRA E PCD*\n\n
+          ● Especialistas:\n
+          - Dra. Rhanelle: Segundas (manhã) e Quartas (tarde)\n
+          - Dra. Samylla: Terças (tarde) e Quintas (tarde)\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao CEO com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgOdontopediatria);
+          registrarMensagemBotNoHistorico(senderId, msgOdontopediatria);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "0":
+          userState.subSubMenu = 0;
+          await chat.sendMessage(getHealthWomensRightsServicesMenu());
+          break;
+  }
+
+} else if (userState.subSubMenu === 3) {
+  // Centro de Fisioterapia
+  switch (text) {
+      case "1":
+          registrarOpcao(senderId, "Centro de Fisioterapia", "1", "Hidroterapia");
+          registrarOpcaoMenuNoHistorico(senderId, "Hidroterapia");
+          atendimentos[senderId].servicoDetalhado = "Hidroterapia - Dr. Henrique (Terças e Sextas) e Dr. Hallfes (Segundas e Quintas)";
+          
+          const msgHidroterapia = `*HIDROTERAPIA*\n\n
+          ● Especialistas:\n
+          - Dr. Henrique: Terças e Sextas (manhã/tarde)\n
+          - Dr. Hallfes: Segundas e Quintas (manhã/tarde)\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao Centro de Fisioterapia com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgHidroterapia);
+          registrarMensagemBotNoHistorico(senderId, msgHidroterapia);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "2":
+          registrarOpcao(senderId, "Centro de Fisioterapia", "2", "Fisioterapia Pediatra");
+          registrarOpcaoMenuNoHistorico(senderId, "Fisioterapia Pediatra");
+          atendimentos[senderId].servicoDetalhado = "Fisioterapia Pediatra - Dra. Millane, Dra. Andréia, Dr. Hallfes, Dr. Henrique, Dra. Ana Carolina";
+          
+          const msgFisioPediatra = `*FISIOTERAPIA PEDIATRA*\n\n
+          ● Especialistas:\n
+          - Dra. Millane: Segundas (manhã), Sextas (tarde) e Sábados (manhã/tarde)\n
+          - Dra. Andréia: Terças e Quartas (manhã/tarde)\n
+          - Dr. Hallfes: Segundas e Quintas (manhã/tarde)\n
+          - Dr. Henrique: Terças e Sextas (manhã/tarde)\n
+          - Dra. Ana Carolina: Segundas e Quartas (manhã/tarde)\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao Centro de Fisioterapia com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgFisioPediatra);
+          registrarMensagemBotNoHistorico(senderId, msgFisioPediatra);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "3":
+          registrarOpcao(senderId, "Centro de Fisioterapia", "3", "Geriatria");
+          registrarOpcaoMenuNoHistorico(senderId, "Geriatria");
+          atendimentos[senderId].servicoDetalhado = "Fisioterapia Motora (Geriatria) - Dra. Luene (Quartas e Quintas) e Dr. Fábio (Segundas e Sextas)";
+          
+          const msgGeriatria = `*FISIOTERAPIA MOTORA (GERIATRIA)*\n\n
+          ● Especialistas:\n
+          - Dra. Luene: Quartas e Quintas (manhã/tarde)\n
+          - Dr. Fábio: Segundas e Sextas (manhã/tarde)\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao Centro de Fisioterapia com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgGeriatria);
+          registrarMensagemBotNoHistorico(senderId, msgGeriatria);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "4":
+          registrarOpcao(senderId, "Centro de Fisioterapia", "4", "Reabilitação Neurológica");
+          registrarOpcaoMenuNoHistorico(senderId, "Reabilitação Neurológica");
+          atendimentos[senderId].servicoDetalhado = "Reabilitação Neurológica - Dr. Fábio (Segundas e Sextas) e Dra. Millane (Segundas, Sextas e Sábados)";
+          
+          const msgNeuro = `*REABILITAÇÃO NEUROLÓGICA*\n\n
+          ● Especialistas:\n
+          - Dr. Fábio: Segundas e Sextas (manhã/tarde)\n
+          - Dra. Millane: Segundas (manhã), Sextas (tarde) e Sábados (manhã/tarde)\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao Centro de Fisioterapia com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgNeuro);
+          registrarMensagemBotNoHistorico(senderId, msgNeuro);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "5":
+          registrarOpcao(senderId, "Centro de Fisioterapia", "5", "Traumato Ortopedia");
+          registrarOpcaoMenuNoHistorico(senderId, "Traumato Ortopedia");
+          atendimentos[senderId].servicoDetalhado = "Traumato-Ortopedia - Dra. Luene (Quartas e Quintas), Dr. Henrique (Terças e Sextas) e Dr. Fábio (Segundas e Sextas)";
+          
+          const msgTraumato = `*TRAUMATO-ORTOPEDIA*\n\n
+          ● Especialistas:\n
+          - Dra. Luene: Quartas e Quintas (manhã/tarde)\n
+          - Dr. Henrique: Terças e Sextas (manhã/tarde)\n
+          - Dr. Fábio: Segundas e Sextas (manhã/tarde)\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao Centro de Fisioterapia com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgTraumato);
+          registrarMensagemBotNoHistorico(senderId, msgTraumato);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "6":
+          registrarOpcao(senderId, "Centro de Fisioterapia", "6", "Reumatologia");
+          registrarOpcaoMenuNoHistorico(senderId, "Reumatologia");
+          atendimentos[senderId].servicoDetalhado = "Reumatologia - Dra. Luene, Dr. Fábio, Dra. Andréia, Dr. Hallfes, Dra. Millane";
+          
+          const msgReumatologia = `*REUMATOLOGIA*\n\n
+          ● Especialistas:\n
+          - Dra. Luene: Quartas e Quintas (manhã/tarde)\n
+          - Dr. Fábio: Segundas e Sextas (manhã/tarde)\n
+          - Dra. Andréia: Terças e Quartas (manhã/tarde)\n
+          - Dr. Hallfes: Segundas e Quintas (manhã/tarde)\n
+          - Dra. Millane: Segundas (manhã), Sextas (tarde) e Sábados (manhã/tarde)\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao Centro de Fisioterapia com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgReumatologia);
+          registrarMensagemBotNoHistorico(senderId, msgReumatologia);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "0":
+          userState.subSubMenu = 0;
+          await chat.sendMessage(getHealthWomensRightsServicesMenu());
+          break;
+  }
+
+} else if (userState.subSubMenu === 4) {
+  // Centro de Imagens
+  switch (text) {
+      case "1":
+          registrarOpcao(senderId, "Centro de Imagens", "1", "Raio-X");
+          registrarOpcaoMenuNoHistorico(senderId, "Raio-X");
+          atendimentos[senderId].servicoDetalhado = "Raio-X - Valcerlandia Almeida, Tamires Araújo e Anderson Leite (Seg-Sex 8-17h, Sáb 8-12h)";
+          
+          const msgRaioX = `*RAIO-X*\n\n
+          ● Radiologistas: Valcerlandia Almeida, Tamires Araújo e Anderson Leite\n
+          ● Dias:\n
+          - Segunda a Sexta: 8:00 às 17:00 hs\n
+          - Sábados: 8:00 às 12:00 hs\n
+          - Plantão noturno e domingos (emergências)\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao Centro de Imagens com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgRaioX);
+          registrarMensagemBotNoHistorico(senderId, msgRaioX);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "2":
+          registrarOpcao(senderId, "Centro de Imagens", "2", "Raio-X Panorâmico");
+          registrarOpcaoMenuNoHistorico(senderId, "Raio-X Panorâmico");
+          atendimentos[senderId].servicoDetalhado = "Raio-X Panorâmico - Lidiane Almeida (Segundas, Terças e Sextas, 8-12h)";
+          
+          const msgPanoramico = `*RAIO-X PANORÂMICO*\n\n
+          ● Radiologista: Lidiane Almeida\n
+          ● Dias: Segundas, Terças e Sextas\n
+          ● Horário: 8:00 às 12:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça ao Centro de Imagens com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgPanoramico);
+          registrarMensagemBotNoHistorico(senderId, msgPanoramico);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "3":
+          registrarOpcao(senderId, "Centro de Imagens", "3", "Mamografia");
+          registrarOpcaoMenuNoHistorico(senderId, "Mamografia");
+          atendimentos[senderId].servicoDetalhado = "Mamografia - Tec. Lidiane Almeida (Quartas, 8-17h)";
+          
+          const msgMamografia = `*MAMOGRAFIA*\n\n
+          ● Especialista: Téc. Lidiane Almeida\n
+          ● Dia: Quartas\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça à Secretaria de Saúde no setor de Regulação com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgMamografia);
+          registrarMensagemBotNoHistorico(senderId, msgMamografia);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "4":
+          registrarOpcao(senderId, "Centro de Imagens", "4", "Endoscopia");
+          registrarOpcaoMenuNoHistorico(senderId, "Endoscopia");
+          atendimentos[senderId].servicoDetalhado = "Endoscopia - Dr. Guilherme Braz (a agendar)";
+          
+          const msgEndoscopia = `*ENDOSCOPIA*\n\n
+          ● Especialista: Dr. Guilherme Braz\n
+          ● Dia: A agendar\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça à Secretaria de Saúde no setor de Regulação com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgEndoscopia);
+          registrarMensagemBotNoHistorico(senderId, msgEndoscopia);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "5":
+          registrarOpcao(senderId, "Centro de Imagens", "5", "Ultrassonografia");
+          registrarOpcaoMenuNoHistorico(senderId, "Ultrassonografia");
+          atendimentos[senderId].servicoDetalhado = "Ultrassonografia - Dr. Paulo Goes (Quartas, 8-17h)";
+          
+          const msgUltrassom = `*ULTRASSONOGRAFIA*\n\n
+          ● Especialista: Dr. Paulo Goes\n
+          ● Dia: Quartas\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça à Secretaria de Saúde no setor de Regulação com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgUltrassom);
+          registrarMensagemBotNoHistorico(senderId, msgUltrassom);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "6":
+          registrarOpcao(senderId, "Centro de Imagens", "6", "Colonoscopia");
+          registrarOpcaoMenuNoHistorico(senderId, "Colonoscopia");
+          atendimentos[senderId].servicoDetalhado = "Colonoscopia - Dr. Guilherme Braz (a agendar)";
+          
+          const msgColonoscopia = `*COLONOSCOPIA*\n\n
+          ● Especialista: Dr. Guilherme Braz\n
+          ● Dia: A agendar\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça à Secretaria de Saúde no setor de Regulação com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgColonoscopia);
+          registrarMensagemBotNoHistorico(senderId, msgColonoscopia);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "7":
+          registrarOpcao(senderId, "Centro de Imagens", "7", "Ecocardiograma");
+          registrarOpcaoMenuNoHistorico(senderId, "Ecocardiograma");
+          atendimentos[senderId].servicoDetalhado = "Ecocardiograma - Dr. Jonny Victor (a agendar)";
+          
+          const msgEco = `*ECOCARDIOGRAMA*\n\n
+          ● Especialista: Dr. Jonny Victor\n
+          ● Dia: A agendar\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça à Secretaria de Saúde no setor de Regulação com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgEco);
+          registrarMensagemBotNoHistorico(senderId, msgEco);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "8":
+          registrarOpcao(senderId, "Centro de Imagens", "8", "Eletrocardiograma");
+          registrarOpcaoMenuNoHistorico(senderId, "Eletrocardiograma");
+          atendimentos[senderId].servicoDetalhado = "Eletrocardiograma - Dr. Dyego Barbosa (Segundas, 8-17h)";
+          
+          const msgEletro = `*ELETROCARDIOGRAMA*\n\n
+          ● Especialista: Dr. Dyego Barbosa\n
+          ● Dia: Segundas\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar, compareça à Secretaria de Saúde no setor de Regulação com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgEletro);
+          registrarMensagemBotNoHistorico(senderId, msgEletro);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "9":
+          registrarOpcao(senderId, "Centro de Imagens", "9", "Oftalmo");
+          registrarOpcaoMenuNoHistorico(senderId, "Oftalmologista");
+          atendimentos[senderId].servicoDetalhado = "Oftalmologista - Dr. Andrey Batista (Quinzenal)";
+          
+          const msgOftalmo = `*OFTALMOLOGISTA*\n\n
+          ● Especialista: Dr. Andrey Batista\n
+          ● Dia: Quinzenal (a agendar)\n
+          ● Horário: 8:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO* 🔴\n
+          Para agendar consulta, compareça à Secretaria de Saúde no setor de Regulação com:\n
+          - Encaminhamento do Município\n
+          - Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgOftalmo);
+          registrarMensagemBotNoHistorico(senderId, msgOftalmo);
+          userState.aguardandoDescricao = true;
+          break;
+          
+      case "0":
+          userState.subSubMenu = 0;
+          await chat.sendMessage(getHealthWomensRightsServicesMenu());
+          break;
+          
+      default:
+          await chat.sendMessage("Opção inválida. Por favor, escolha uma opção válida.");
+  }
+
+} else if (userState.subSubMenu === 5) {
+  // UBSF - Unidades Básicas de Saúde da Família
+  switch (text) {
+      case "1":
+          registrarOpcao(senderId, "UBSF", "1", "Albino Bezerra de Vasconcelos");
+          registrarOpcaoMenuNoHistorico(senderId, "UBSF Albino Bezerra");
+          atendimentos[senderId].servicoDetalhado = "UBSF Albino Bezerra de Vasconcelos";
+          
+          const msgAlbino = `*UBSF ALBINO BEZERRA DE VASCONCELOS*\n\n
+          👨‍⚕️ *Profissionais:*\n
+          ● Médico(a): Emanuela Giordana Freitas de Siqueira\n
+          ● Dentista: Ana Luiza Neves de Macedo\n
+          ● Enfermeiro(a): Edy Karlla Bezerra da Silva\n
+          ● Téc. Enfermagem: Francialle Silva Franco e Leni Aragão Bezerra Galindo\n
+          ● ACS: Adnice, Lilyan, Alberi, David\n\n
+          📅 *Dias de Atendimento:*\n
+          ● Médico: Terças e Quartas (manhã/tarde), Quintas (manhã)\n
+          ● Dentista: Segundas (tarde), Quartas (manhã/tarde), Sextas (tarde)\n
+          ● Enfermagem: Segunda a Sexta (manhã/tarde)\n
+          ⏰ Horário: 8:00 às 16:00 hs\n\n
+          🔴 *ATENÇÃO*\n
+          Para agendar consulta, compareça à UBSF com:\n
+          ● Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgAlbino);
+          registrarMensagemBotNoHistorico(senderId, msgAlbino);
+          userState.aguardandoDescricao = true;
+          break;
+
+      case "2":
+          registrarOpcao(senderId, "UBSF", "2", "Antônio Pedro da Silva (Pedra Fixe)");
+          registrarOpcaoMenuNoHistorico(senderId, "UBSF Pedra Fixe");
+          atendimentos[senderId].servicoDetalhado = "UBSF Antônio Pedro da Silva (Pedra Fixe)";
+          
+          const msgPedraFixe = `*UBSF ANTÔNIO PEDRO DA SILVA (PEDRA FIXE)*\n\n
+          👨‍⚕️ *Profissionais:*\n
+          ● Médico(a): Yobânia Vargas Aguiar\n
+          ● Dentista: Letícia Galdinho\n
+          ● ASB: Valdenira Ferreira da Silva\n
+          ● Enfermeiro(a): Mariana Almeida Macêdo\n
+          ● Téc. Enfermagem: Maria Aparecida Santos Felix\n
+          ● ACS: Ana Maria, Edilene, Edvalda, Maria da Consolação, Maria Valeria\n\n
+          📅 *Dias de Atendimento:*\n
+          ● Médico: Quintas - Sítio Pedrinhas (manhã)\n
+          ● Dentista: Segundas (Pedrinhas/Simeão), Terças (Pedra Fixe), Quartas (Serra do Totel)\n
+          ● Enfermagem: Segunda a Sexta (manhã/tarde)\n
+          ⏰ Horário: 7:00 às 17:00 hs\n\n
+          🔴 *ATENÇÃO*\n
+          Todos os atendimentos na UBSF Pedra Fixe. Leve seu Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgPedraFixe);
+          registrarMensagemBotNoHistorico(senderId, msgPedraFixe);
+          userState.aguardandoDescricao = true;
+          break;
+
+      case "3":
+          registrarOpcao(senderId, "UBSF", "3", "João Francisco Bezerra (COHAB)");
+          registrarOpcaoMenuNoHistorico(senderId, "UBSF COHAB");
+          atendimentos[senderId].servicoDetalhado = "UBSF João Francisco Bezerra (COHAB)";
+          
+          const msgCohab = `*UBSF JOÃO FRANCISCO BEZERRA (COHAB)*\n\n
+          👨‍⚕️ *Profissionais:*\n
+          ● Médico(a): André Ricardo\n
+          ● Dentista: Maria Aryanna Libório Alexandre\n
+          ● ASB: Geane Maria Lima dos Santos\n
+          ● Enfermeiro(a): Dra. Joanna Lima e Dr. André\n
+          ● Téc. Enfermagem: Drielly Ruanna Ferreira e Waldiedja Galindo\n
+          ● Aux. Enfermagem: Joselene Bezerra Galindo\n
+          ● ACS: Edilene, Jerry, Lucianna, Luciano, Luciclecio, Nilda\n\n
+          📅 *Dias de Atendimento:*\n
+          ● Médico: Terças a Sextas (manhã/tarde)\n
+          ● Dentista: Segundas a Quintas (manhã/tarde)\n
+          ● Enfermagem: Segunda a Sexta (manhã/tarde)\n
+          ⏰ Horário: 8:00 às 16:00 hs\n\n
+          🔴 *ATENÇÃO*\n
+          Para agendar consulta, compareça à UBSF com Cartão do SUS.\n\n
+          *0*: Voltar Menu Secretaria\n
+          *00*: Finalizar Atendimento.`;
+          
+          await chat.sendMessage(msgCohab);
+          registrarMensagemBotNoHistorico(senderId, msgCohab);
+          userState.aguardandoDescricao = true;
+          break;
+      case "4":
     registrarOpcao(senderId, "UBSF", "4", "José Jorge (Azevém)");
     registrarOpcaoMenuNoHistorico(senderId, "UBSF Azevém");
     atendimentos[senderId].servicoDetalhado = "UBSF José Jorge Bezerra (Azevém)";
@@ -4298,7 +4703,6 @@ case "5":
     registrarMensagemBotNoHistorico(senderId, msgMaeLipu);
     userState.aguardandoDescricao = true;
     break;
-
 case "6":
     registrarOpcao(senderId, "UBSF", "6", "Maria Lenice");
     registrarOpcaoMenuNoHistorico(senderId, "UBSF Maria Lenice");
@@ -4416,131 +4820,100 @@ case "9":
                   break;
                }
             }
-            break;
-           case 6: // Hosp. e Matern. Justa Mª Bezerra
-          if (userState.subSubMenu === 1) {
-            // Exames Laboratoriais
-            switch (text) {
-              case "1":
-  registrarOpcao(senderId, "Exames Laboratoriais", "1", "Lista de Exames Disponíveis");
-  registrarOpcaoMenuNoHistorico(senderId, "Lista de Exames Disponíveis");
-  atendimentos[senderId].servicoDetalhado = "Lista de Exames Disponíveis";
-  const msgListaExames = "*Lista de exames disponíveis:*\n ● Hemograma\n ● Glicemia\n ● TGO\n ● TGP\n ● Ureia\n ● Creatinina\n ● Sumário de Urina\n ● Sódio\n ● Potássio\n ● Triglicerídeos\n ● Colesterol\n ● D-Dimero\n ● VDRL.\n\n*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgListaExames);
-  registrarMensagemBotNoHistorico(senderId, msgListaExames);
-  break;
-
-case "2":
-  registrarOpcao(senderId, "Exames Laboratoriais", "2", "Solicitação de Exames");
-  registrarOpcaoMenuNoHistorico(senderId, "Solicitação de Exames");
-  atendimentos[senderId].servicoDetalhado = "Solicitação de Exames";
-  const msgSolicitacaoExames = "*Solicitação de Exames*:\n ● Cartão do SUS\n ● CPF\n ● RG\n ● Requisição Médica\n ● Comprovante de Residência.\n\n*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
-  await chat.sendMessage(msgSolicitacaoExames);
-  registrarMensagemBotNoHistorico(senderId, msgSolicitacaoExames);
-  break;
-              case "0":
+            // Hosp. e Matern. Justa Mª Bezerra
+            if (userState.mainMenu === 6 && userState.subSubMenu === 1) {
+              // Exames Laboratoriais
+              switch (text) {
+                case "1":
+                  registrarOpcao(senderId, "Exames Laboratoriais", "1", "Lista de Exames Disponíveis");
+                  registrarOpcaoMenuNoHistorico(senderId, "Lista de Exames Disponíveis");
+                  atendimentos[senderId].servicoDetalhado = "Lista de Exames Disponíveis";
+                  const msgListaExames = "*Lista de exames disponíveis:*\n ● Hemograma\n ● Glicemia\n ● TGO\n ● TGP\n ● Ureia\n ● Creatinina\n ● Sumário de Urina\n ● Sódio\n ● Potássio\n ● Triglicerídeos\n ● Colesterol\n ● D-Dimero\n ● VDRL.\n\n*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
+                  await chat.sendMessage(msgListaExames);
+                  registrarMensagemBotNoHistorico(senderId, msgListaExames);
+                  break;
+          
+                case "2":
+                  registrarOpcao(senderId, "Exames Laboratoriais", "2", "Solicitação de Exames");
+                  registrarOpcaoMenuNoHistorico(senderId, "Solicitação de Exames");
+                  atendimentos[senderId].servicoDetalhado = "Solicitação de Exames";
+                  const msgSolicitacaoExames = "*Solicitação de Exames*:\n ● Cartão do SUS\n ● CPF\n ● RG\n ● Requisição Médica\n ● Comprovante de Residência.\n\n*0*: Menu Inicial\n*00*: Finalizar Atendimento.";
+                  await chat.sendMessage(msgSolicitacaoExames);
+                  registrarMensagemBotNoHistorico(senderId, msgSolicitacaoExames);
+                  break;
+          
+                case "0":
                   userState.subSubMenu = 0;
                   await chat.sendMessage(getHealthWomensRightsServicesMenu());
                   break;
               }
             }
-        break;
-      }
-    }
-  }
-
-  // Adicionar no início do atendimento, antes de coletar dados pessoais
-  if (!userState.solicitacaoAnonimaPerguntada && userState.aguardandoDescricao) {
-    userState.solicitacaoAnonimaPerguntada = true;
-    userState.aguardandoDescricao = false;
-    userState.aguardandoEscolhaAnonima = true;
-    await chat.sendMessage(
-        "Deseja registrar sua solicitação de forma anônima?\n1. Sim\n2. Não\n\n*De acordo com a LGPD, ao escolher anonimato, nenhum dado pessoal será solicitado ou armazenado.*"
-    );
-    return;
-  }
-
-  if (userState.aguardandoEscolhaAnonima) {
-    if (text === "1") {
-        userState.solicitacaoAnonima = true;
-        userState.aguardandoEscolhaAnonima = false;
-        userState.aguardandoDescricao = true;
-        if (!atendimentos[senderId]) atendimentos[senderId] = {};
-        atendimentos[senderId].anonimo = true;
-        await chat.sendMessage("Sua solicitação será registrada de forma anônima. Por favor, descreva sua demanda.");
-        return;
-    } else if (text === "2") {
-        userState.solicitacaoAnonima = false;
-        userState.aguardandoEscolhaAnonima = false;
-        userState.aguardandoDescricao = true;
-        if (!atendimentos[senderId]) atendimentos[senderId] = {};
-        atendimentos[senderId].anonimo = false;
-        await chat.sendMessage("Ok, sua solicitação NÃO será anônima. Por favor, descreva sua demanda.");
-        return;
-    } else {
-        await chat.sendMessage("Por favor, responda apenas com 1 (Sim) ou 2 (Não). Deseja registrar sua solicitação de forma anônima?\n1. Sim\n2. Não");
-        return;
-    }
-  }
-
-  // Função para registrar opção de menu escolhida no histórico
-  function registrarOpcaoMenuNoHistorico(senderId, nomeOpcao) {
-    if (!conversationHistory[senderId]) {
-        conversationHistory[senderId] = {
-            messages: [],
-            timestamps: [],
-            origem: []
-        };
-    }
-    conversationHistory[senderId].messages.push(`Usuário selecionou: ${nomeOpcao}`);
-    conversationHistory[senderId].timestamps.push(new Date().toISOString());
-    conversationHistory[senderId].origem.push('menu');
-  }
-
-  // Função para registrar mensagem do bot no histórico
-  function registrarMensagemBotNoHistorico(senderId, mensagem) {
-    if (!conversationHistory[senderId]) {
-        conversationHistory[senderId] = {
-            messages: [],
-            timestamps: [],
-            origem: []
-        };
-    }
-    conversationHistory[senderId].messages.push(`Bot: ${mensagem}`);
-    conversationHistory[senderId].timestamps.push(new Date().toISOString());
-    conversationHistory[senderId].origem.push('bot');
-  }
-
-  // Exemplo de uso: sempre que o usuário escolher uma opção de menu, chame registrarOpcaoMenuNoHistorico(senderId, nomeOpcao)
-  // Sempre que o bot enviar uma mensagem relevante, chame registrarMensagemBotNoHistorico(senderId, mensagem)
-});
-
-// =============================================
-// INICIALIZAÇÃO
-// =============================================
-console.log("Iniciando cliente WhatsApp...");
-
-// Tratamento de erros global
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ Erro não tratado:', reason);
-});
-
-process.on('uncaughtException', (error) => {
-    console.error('❌ Exceção não capturada:', error);
-});
-
-// Inicializa o cliente WhatsApp
-try {
-    console.log('🚀 Iniciando cliente WhatsApp...');
-    client.initialize();
-} catch (error) {
-    console.error('❌ Erro ao inicializar cliente:', error);
-}
-
-// =============================================
-// EXPORTAÇÃO DE FUNÇÕES
-// =============================================
-module.exports = {
-    enviarEmailNotificacao
-};
-
+          
+          // Adicionar no início do atendimento, antes de coletar dados pessoais
+          if (!userState.solicitacaoAnonimaPerguntada && userState.aguardandoDescricao) {
+            userState.solicitacaoAnonimaPerguntada = true;
+            userState.aguardandoDescricao = false;
+            userState.aguardandoEscolhaAnonima = true;
+            await chat.sendMessage(
+              "Deseja registrar sua solicitação de forma anônima?\n1. Sim\n2. Não\n\n*De acordo com a LGPD, ao escolher anonimato, nenhum dado pessoal será solicitado ou armazenado.*"
+            );
+            return;
+          }
+          
+          if (userState.aguardandoEscolhaAnonima) {
+            if (text === "1") {
+              userState.solicitacaoAnonima = true;
+              userState.aguardandoEscolhaAnonima = false;
+              userState.aguardandoDescricao = true;
+              if (!atendimentos[senderId]) atendimentos[senderId] = {};
+              atendimentos[senderId].anonimo = true;
+              await chat.sendMessage("Sua solicitação será registrada de forma anônima. Por favor, descreva sua demanda.");
+              return;
+            } else if (text === "2") {
+              userState.solicitacaoAnonima = false;
+              userState.aguardandoEscolhaAnonima = false;
+              userState.aguardandoDescricao = true;
+              if (!atendimentos[senderId]) atendimentos[senderId] = {};
+              atendimentos[senderId].anonimo = false;
+              await chat.sendMessage("Ok, sua solicitação NÃO será anônima. Por favor, descreva sua demanda.");
+              return;
+            } else {
+              await chat.sendMessage("Por favor, responda apenas com 1 (Sim) ou 2 (Não). Deseja registrar sua solicitação de forma anônima?\n1. Sim\n2. Não");
+              return;
+            }
+          }
+          
+          // Exemplo de uso: sempre que o usuário escolher uma opção de menu, chame registrarOpcaoMenuNoHistorico(senderId, nomeOpcao)
+          // Sempre que o bot enviar uma mensagem relevante, chame registrarMensagemBotNoHistorico(senderId, mensagem)
+        }
+        }
+        });
+          
+          // =============================================
+          // INICIALIZAÇÃO
+          // =============================================
+          console.log("Iniciando cliente WhatsApp...");
+          
+          // Tratamento de erros global
+          process.on('unhandledRejection', (reason, promise) => {
+            console.error('❌ Erro não tratado:', reason);
+          });
+          
+          process.on('uncaughtException', (error) => {
+            console.error('❌ Exceção não capturada:', error);
+          });
+          
+          // Inicializa o cliente WhatsApp
+          try {
+            console.log('🚀 Iniciando cliente WhatsApp...');
+            client.initialize();
+          } catch (error) {
+            console.error('❌ Erro ao inicializar cliente:', error);
+          }
+          
+          // =============================================
+          // EXPORTAÇÃO DE FUNÇÕES
+          // =============================================
+          module.exports = {
+            enviarEmailNotificacao
+          };

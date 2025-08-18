@@ -1,32 +1,47 @@
 # 🤖 Sistema de Ouvidoria Municipal - Venturosa
 
-## 📁 Estrutura do Projeto
+## 📁 Estrutura do Projeto Organizada
 
 ```
 CHATBOT OUV/
 ├── 📁 scripts/           # Scripts de inicialização e execução
 ├── 📁 config/            # Arquivos de configuração
 ├── 📁 database/          # Banco de dados
-├── 📁 logs/              # Logs do sistema
-├── 📁 temp/              # Arquivos temporários
 ├── 📁 docs/              # Documentação
-├── 📁 backend/           # Servidor backend
-├── 📁 frontend/          # Aplicação React
+├── 📁 backend/           # Servidor backend (Vercel)
+├── 📁 frontend/          # Aplicação React (Netlify)
+├── 📁 chatbot/           # Código estruturado do chatbot WhatsApp
+│   ├── 📁 src/           # Código fonte do chatbot
+│   │   ├── 📁 config/    # Configurações do chatbot
+│   │   ├── 📁 controllers/ # Controladores
+│   │   ├── 📁 models/    # Modelos de dados
+│   │   ├── 📁 services/  # Serviços
+│   │   └── 📁 utils/     # Utilitários
 ├── 📁 assets/            # Recursos estáticos
-├── 📁 anexos/            # Anexos de mensagens
-├── 📄 chat.js            # Código principal do chatbot
-└── 📄 .gitignore         # Configuração do Git
+├── 📄 chat.js            # Ponto de entrada do chatbot
+├── 📄 iniciar_sistema_completo.ps1 # Script para iniciar todo o sistema
+└── 📄 fechar_sistema_completo.ps1  # Script para encerrar o sistema
 ```
 
 ## 🚀 Como Executar
 
-### 🌐 **DEPLOY PÚBLICO GRATUITO (Recomendado)**
+### 🔄 **Execução Local**
+
+```powershell
+# Iniciar o sistema completo (backend, frontend e chatbot)
+.\iniciar_sistema_completo.ps1
+
+# Para encerrar o sistema
+.\fechar_sistema_completo.ps1
+```
+
+### 🌐 **DEPLOY PÚBLICO**
 
 #### 🥇 Opção 1: ngrok (Mais Rápido - 5 minutos)
 ```powershell
 # Baixar ngrok de: https://ngrok.com/download
 # Executar sistema
-.\scripts\executar_sistema_completo_com_nginx.ps1
+.\iniciar_sistema_completo.ps1
 # Em novo terminal: ngrok http 80
 # URL pública: https://abc123.ngrok.io/venturosa
 ```

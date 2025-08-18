@@ -39,7 +39,7 @@ async function enviarEmailNotificacao(destinatario, assunto, corpo, anexo = null
 }
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 const SECRET = 'segredo_super_secreto'; // Troque por um segredo forte em produção
 
 app.use(cors());
@@ -52,8 +52,8 @@ app.get('/api/health', (req, res) => {
 
 // Inicialização do banco de dados
 const path = require('path');
-// Caminho modificado para apontar para a unidade N:
-const dbPath = 'N:\\ouvidoria.db';
+// Usar variável de ambiente ou fallback para o arquivo local na pasta backend
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'ouvidoria.db');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Erro ao conectar ao banco de dados:', err);
@@ -434,6 +434,9 @@ app.post('/api/solicitacoes', autenticarUsuario, (req, res) => {
 app.post('/api/solicitacoes/:id/responder', autenticarUsuario, (req, res) => {
   const { id } = req.params;
   const { resposta } = req.body;
+  const responsavelId = req.usuario.id;
+  const dataHora = new Date().toISOString();
+  
   // Só pode responder se for da secretaria do usuário
   db.get('SELECT * FROM solicitacoes WHERE id = ?', [id], (err, solicitacao) => {
     if (err) return res.status(500).json({ erro: 'Erro ao buscar solicitação' });
@@ -441,9 +444,32 @@ app.post('/api/solicitacoes/:id/responder', autenticarUsuario, (req, res) => {
     if (solicitacao.secretaria !== req.usuario.secretaria) {
       return res.status(403).json({ erro: 'Acesso negado à solicitação de outra secretaria' });
     }
+    
+    // Atualizar a solicitação
     db.run('UPDATE solicitacoes SET resposta = ?, status = ? WHERE id = ?', [resposta, 'respondida', id], function (err2) {
       if (err2) return res.status(500).json({ erro: 'Erro ao responder solicitação' });
-      res.json({ mensagem: 'Solicitação respondida com sucesso!' });
+      
+      // Registrar no histórico de status
+      db.run('INSERT INTO historico_status (solicitacao_id, status, data, responsavel_id, descricao) VALUES (?, ?, ?, ?, ?)',
+        [id, 'respondida', dataHora, responsavelId, resposta], function(err3) {
+          if (err3) {
+            console.error('Erro ao registrar resposta no histórico de status:', err3);
+            return res.status(500).json({ erro: 'Erro ao registrar resposta no histórico' });
+          }
+          
+          // Registrar no histórico de interações
+          db.run(`
+            INSERT INTO historico_interacoes (demanda_id, protocolo, mensagem, origem, timestamp, responsavel_id, responsavel_tipo)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `, [id, solicitacao.protocolo, resposta, 'secretaria', dataHora, responsavelId, 'secretaria'], function(err4) {
+            if (err4) {
+              console.error('Erro ao registrar resposta no histórico de interações:', err4);
+              // Continua mesmo com erro no histórico de interações
+            }
+            
+            res.json({ mensagem: 'Solicitação respondida com sucesso!' });
+          });
+      });
     });
   });
 });
@@ -500,17 +526,35 @@ app.post('/api/solicitacoes/:id/comentario', autenticarUsuario, (req, res) => {
   const { comentario, anexo } = req.body;
   const responsavelId = req.usuario.id;
   const dataHora = new Date().toISOString();
+  
   db.get('SELECT * FROM solicitacoes WHERE id = ?', [id], (err, solicitacao) => {
     if (err) return res.status(500).json({ erro: 'Erro ao buscar solicitação' });
     if (!solicitacao) return res.status(404).json({ erro: 'Solicitação não encontrada' });
     if (solicitacao.secretaria !== req.usuario.secretaria && !req.usuario.is_master) {
       return res.status(403).json({ erro: 'Acesso negado à solicitação de outra secretaria' });
     }
+    
+    // Determinar o tipo de responsável (secretaria ou ouvidor)
+    const responsavelTipo = req.usuario.is_master ? 'ouvidor' : 'secretaria';
+    
+    // Registrar no histórico de status
     db.run('INSERT INTO historico_status (solicitacao_id, status, data, responsavel_id, descricao, anexo) VALUES (?, ?, ?, ?, ?, ?)',
       [id, solicitacao.status, dataHora, responsavelId, comentario, anexo || null],
       function (err2) {
         if (err2) return res.status(500).json({ erro: 'Erro ao registrar comentário' });
-        res.json({ mensagem: 'Comentário adicionado com sucesso!' });
+        
+        // Registrar no histórico de interações
+        db.run(`
+          INSERT INTO historico_interacoes (demanda_id, protocolo, mensagem, origem, timestamp, responsavel_id, responsavel_tipo)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [id, solicitacao.protocolo, comentario, 'sistema', dataHora, responsavelId, responsavelTipo], function(err3) {
+          if (err3) {
+            console.error('Erro ao registrar comentário no histórico de interações:', err3);
+            // Continua mesmo com erro no histórico de interações
+          }
+          
+          res.json({ mensagem: 'Comentário adicionado com sucesso!' });
+        });
       });
   });
 });
@@ -779,18 +823,46 @@ app.post('/api/solicitacoes/:id/resolver-encaminhamento', autenticarMaster, (req
   const { id } = req.params;
   const { resposta_ouvidor, status_final } = req.body;
   
-  db.run('UPDATE solicitacoes SET resposta = ?, status = ?, encaminhar_ouvidor = 0 WHERE id = ?', 
-    [resposta_ouvidor, status_final, id], 
-    function (err) {
-      if (err) return res.status(500).json({ erro: 'Erro ao resolver solicitação' });
-      
-      // Adicionar ao histórico
-      const data = new Date().toISOString();
-      db.run('INSERT INTO historico_status (solicitacao_id, status, data, responsavel_id, descricao) VALUES (?, ?, ?, ?, ?)',
-        [id, status_final, data, req.usuario.id, `Resolvido pelo ouvidor geral: ${resposta_ouvidor}`]);
-      
-      res.json({ mensagem: 'Solicitação resolvida pelo ouvidor geral' });
-    });
+  // Obter informações da solicitação para registrar o protocolo
+  db.get('SELECT protocolo FROM solicitacoes WHERE id = ?', [id], (err, solicitacao) => {
+    if (err) {
+      console.error('Erro ao buscar protocolo da solicitação:', err);
+      return res.status(500).json({ erro: 'Erro ao buscar protocolo da solicitação.' });
+    }
+    
+    if (!solicitacao) {
+      return res.status(404).json({ erro: 'Solicitação não encontrada.' });
+    }
+    
+    const protocolo = solicitacao.protocolo;
+    const data = new Date().toISOString();
+    
+    db.run('UPDATE solicitacoes SET resposta = ?, status = ?, encaminhar_ouvidor = 0 WHERE id = ?', 
+      [resposta_ouvidor, status_final, id], 
+      function (err) {
+        if (err) return res.status(500).json({ erro: 'Erro ao resolver solicitação' });
+        
+        // Adicionar ao histórico de status
+        db.run('INSERT INTO historico_status (solicitacao_id, status, data, responsavel_id, descricao) VALUES (?, ?, ?, ?, ?)',
+          [id, status_final, data, req.usuario.id, `Resolvido pelo ouvidor geral: ${resposta_ouvidor}`], function(err) {
+            if (err) {
+              console.error('Erro ao registrar histórico de status:', err);
+            }
+            
+            // Registrar no histórico de interações
+            db.run(`
+              INSERT INTO historico_interacoes (demanda_id, protocolo, usuario_id, mensagem, origem, timestamp, responsavel_id, responsavel_tipo)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `, [id, protocolo, 'sistema', resposta_ouvidor, 'ouvidor', data, req.usuario.id, 'ouvidor'], function(err) {
+              if (err) {
+                console.error('Erro ao registrar histórico de interações:', err);
+              }
+              
+              res.json({ mensagem: 'Solicitação resolvida pelo ouvidor geral' });
+            });
+          });
+      });
+  });
 });
 
 // =============================================
@@ -1160,34 +1232,68 @@ app.post('/api/demandas/:id/responder', autenticarUsuario, autorizarAcessoDemand
   
   const dataAtualizacao = new Date().toISOString();
   
-  db.run(`
-    UPDATE demandas 
-    SET status = 'respondida', 
-        data_atualizacao = ?, 
-        responsavel_id = ?
-    WHERE id = ?
-  `, [dataAtualizacao, responsavelId, id], function(err) {
+  // Obter informações da demanda para registrar o protocolo
+  db.get('SELECT protocolo FROM demandas WHERE id = ?', [id], (err, demanda) => {
     if (err) {
-      console.error('Erro ao atualizar demanda:', err);
-      return res.status(500).json({ erro: 'Erro ao atualizar demanda.' });
+      console.error('Erro ao buscar protocolo da demanda:', err);
+      return res.status(500).json({ erro: 'Erro ao buscar protocolo da demanda.' });
     }
     
-    if (this.changes === 0) {
+    if (!demanda) {
       return res.status(404).json({ erro: 'Demanda não encontrada.' });
     }
     
-    // Registrar no histórico
+    const protocolo = demanda.protocolo;
+    
     db.run(`
-      INSERT INTO historico_status (solicitacao_id, status, data, responsavel_id, descricao, anexo)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [id, 'respondida', dataAtualizacao, responsavelId, resposta, anexo || null], function(err) {
+      UPDATE demandas 
+      SET status = 'respondida', 
+          data_atualizacao = ?, 
+          responsavel_id = ?
+      WHERE id = ?
+    `, [dataAtualizacao, responsavelId, id], function(err) {
       if (err) {
-        console.error('Erro ao registrar histórico:', err);
+        console.error('Erro ao atualizar demanda:', err);
+        return res.status(500).json({ erro: 'Erro ao atualizar demanda.' });
       }
       
-      res.json({ 
-        mensagem: 'Demanda respondida com sucesso!',
-        demanda_id: id 
+      if (this.changes === 0) {
+        return res.status(404).json({ erro: 'Demanda não encontrada.' });
+      }
+      
+      // Registrar no histórico de status
+      db.run(`
+        INSERT INTO historico_status (solicitacao_id, status, data, responsavel_id, descricao, anexo)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [id, 'respondida', dataAtualizacao, responsavelId, resposta, anexo || null], function(err) {
+        if (err) {
+          console.error('Erro ao registrar histórico de status:', err);
+        }
+        
+        // Determinar o tipo de responsável (secretaria ou ouvidor)
+        db.get('SELECT is_master, secretaria FROM usuarios WHERE id = ?', [responsavelId], (err, usuario) => {
+          if (err) {
+            console.error('Erro ao buscar informações do usuário:', err);
+            return res.status(500).json({ erro: 'Erro ao buscar informações do usuário.' });
+          }
+          
+          const responsavelTipo = usuario.is_master ? 'ouvidor' : 'secretaria';
+          
+          // Registrar no histórico de interações
+          db.run(`
+            INSERT INTO historico_interacoes (demanda_id, protocolo, usuario_id, mensagem, origem, timestamp, responsavel_id, responsavel_tipo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `, [id, protocolo, 'sistema', resposta, responsavelTipo, dataAtualizacao, responsavelId, responsavelTipo], function(err) {
+            if (err) {
+              console.error('Erro ao registrar histórico de interações:', err);
+            }
+            
+            res.json({ 
+              mensagem: 'Demanda respondida com sucesso!',
+              demanda_id: id 
+            });
+          });
+        });
       });
     });
   });

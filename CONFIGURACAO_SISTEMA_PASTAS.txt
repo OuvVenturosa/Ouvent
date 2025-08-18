@@ -1,0 +1,69 @@
+﻿# =============================================
+# CONFIGURAÃ‡ÃƒO DO SISTEMA DE PASTAS ORGANIZADAS
+# =============================================
+# Criado em: 18/08/2025 00:12:49
+
+## ESTRUTURA DE PASTAS
+BASE_DIR = "N:\\OUVIDORIA_CONVERSAS"
+
+### ORGANIZAÃ‡ÃƒO POR DATA
+- Ano (YYYY)
+- MÃªs (MM - Nome do MÃªs)
+- Tipo de ConteÃºdo
+- Protocolo EspecÃ­fico
+- Categoria dentro do Protocolo
+
+### TIPOS DE CONTEÃšDO
+- SOLICITACOES_USUARIOS
+- RESPOSTAS_RESPONSAVEIS
+- CONSULTAS_PROTOCOLOS
+- ALTERACOES_STATUS
+- INTERACOES_ADICIONAIS
+- ANEXOS_MIDIA
+- RELATORIOS_CONVERSAS
+
+### ESTRUTURA DO PROTOCOLO
+- SOLICITACAO_INICIAL
+- MENSAGENS_TROCADAS
+- OPCOES_MENU_SELECIONADAS
+- RESPOSTA_RESPONSAVEL
+- CONSULTAS_REALIZADAS
+- ALTERACOES_STATUS
+- INTERACOES_ADICIONAIS
+- ANEXOS_ENVIADOS
+- RELATORIO_FINAL
+
+## FORMATOS DE ARQUIVO
+- Texto: .txt (UTF-8)
+- Imagens: .jpg (baixa qualidade)
+- Documentos: .pdf
+- Anexos: formato original
+
+## INTEGRAÃ‡ÃƒO COM SISTEMA
+- Arquivo: integracao_pastas.js
+- FunÃ§Ãµes: salvarConversaNasPastas, salvarDadosNasPastas
+- VerificaÃ§Ã£o: obterInfoEstrutura
+
+## USO NO CHAT.JS
+`javascript
+const { salvarConversaNasPastas } = require('./integracao_pastas');
+
+// Salvar conversa completa
+await salvarConversaNasPastas(protocolo, reportData);
+
+// Salvar dados especÃ­ficos
+await salvarDadosNasPastas(protocolo, 'mensagens', mensagens);
+await salvarDadosNasPastas(protocolo, 'resposta', resposta);
+`
+
+## MANUTENÃ‡ÃƒO
+- Criar nova pasta mensal automaticamente
+- Organizar protocolos por data
+- Manter estrutura hierÃ¡rquica
+- Backup regular da unidade N
+- Limpeza de dados antigos
+
+## VERIFICAÃ‡ÃƒO
+- Teste: node teste_sistema_pastas.js
+- Script: .\scripts\criar_estrutura_pastas.ps1
+- Status: .\scripts\verificar_status_sistema_simples.ps1

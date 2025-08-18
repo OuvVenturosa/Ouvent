@@ -5,7 +5,35 @@
 
 const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
-const { scheduleMonthlyReport } = require('../services/reportService');
+let QRCode;
+try {
+    QRCode = require('qrcode');
+} catch (e) {
+    QRCode = null;
+}
+// Importação opcional do serviço de relatórios
+let scheduleMonthlyReport;
+try {
+    const reportService = require('../services/reportService');
+    scheduleMonthlyReport = reportService.scheduleMonthlyReport;
+} catch (error) {
+    console.log('⚠️ Serviço de relatórios não disponível, continuando sem agendamento');
+    scheduleMonthlyReport = () => console.log('📊 Relatórios não disponíveis');
+}
+// Importação opcional do banco de dados
+let db;
+try {
+    const dbConnection = require('../database/dbConnection');
+    db = dbConnection.db;
+} catch (error) {
+    console.log('⚠️ Banco de dados não disponível, continuando sem persistência');
+    db = null;
+}
+const path = require('path');
+const fs = require('fs');
+
+// Cliente global para ser acessado por outros módulos
+let client;
 
 /**
  * Inicializa o cliente do WhatsApp com as configurações necessárias
@@ -13,7 +41,7 @@ const { scheduleMonthlyReport } = require('../services/reportService');
  */
 function initializeClient() {
     // Inicializa o cliente do WhatsApp
-    const client = new Client({
+    client = new Client({
         authStrategy: new LocalAuth(),
         puppeteer: {
             headless: true,
@@ -52,6 +80,17 @@ function setupClientEvents(client) {
             qrcode.generate(qr, { small: true });
             console.log('✅ QR Code gerado com sucesso!');
             console.log('📱 Escaneie o QR Code acima com seu WhatsApp');
+            // Também salva em arquivo PNG para facilitar o scan no ambiente integrado
+            if (QRCode) {
+                const outDir = path.join(process.cwd(), 'assets');
+                if (!fs.existsSync(outDir)) { fs.mkdirSync(outDir, { recursive: true }); }
+                const outFile = path.join(outDir, 'whatsapp_qr.png');
+                QRCode.toFile(outFile, qr, { width: 320 }, (err) => {
+                    if (!err) {
+                        console.log(`🖼️ QR salvo em: ${outFile}`);
+                    }
+                });
+            }
         } catch (error) {
             console.error('❌ Erro ao gerar QR Code:', error);
         }
@@ -81,5 +120,6 @@ function setupClientEvents(client) {
 }
 
 module.exports = {
-    initializeClient
+    initializeClient,
+    client
 };
